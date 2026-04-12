@@ -194,12 +194,7 @@
 
       <div id="greet-form" hidden>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <div>
-            <label>Message</label>
-            <textarea id="message" placeholder="GM! ☀️" maxlength="100"></textarea>
-            <div class="char-count"><span id="char-count">0</span> / 100</div>
-          </div>
-          <button id="greet-btn" disabled>Send GM 🌅</button>
+          <button id="greet-btn">Send GM 🌅</button>
           <div id="tx-result" hidden></div>
         </div>
       </div>
@@ -231,8 +226,6 @@
     const statusText  = document.getElementById('status-text')
     const greetForm   = document.getElementById('greet-form')
     const notFollowing = document.getElementById('not-following')
-    const msgInput    = document.getElementById('message')
-    const charCount   = document.getElementById('char-count')
     const greetBtn    = document.getElementById('greet-btn')
     const txResult    = document.getElementById('tx-result')
 
@@ -242,16 +235,6 @@
       const dot = statusBadge.querySelector('.dot')
       dot.className = type === 'loading' ? 'dot pulse' : 'dot'
     }
-
-    // ── Enable button only when message is filled ─────────────────────────────
-    function validateInputs() {
-      greetBtn.disabled = msgInput.value.trim().length === 0
-    }
-
-    msgInput.addEventListener('input', () => {
-      charCount.textContent = msgInput.value.length
-      validateInputs()
-    })
 
     // ── Main ──────────────────────────────────────────────────────────────────
     async function main() {
@@ -306,7 +289,7 @@
       // ── Greet handler ────────────────────────────────────────────────────
       greetBtn.addEventListener('click', async () => {
         const to      = GM_ADDRESS
-        const message = msgInput.value.trim()
+        const message = 'GM! gm gm 🌅'
 
         greetBtn.disabled = true
         greetBtn.textContent = 'Sending…'
@@ -339,7 +322,6 @@
         } finally {
           greetBtn.disabled = false
           greetBtn.textContent = 'Send GM 🌅'
-          validateInputs()
         }
       })
     }
