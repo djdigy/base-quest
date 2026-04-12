@@ -12,6 +12,10 @@
     "imageUrl": "https://base-quest-three.vercel.app/og.png",
     "buttonTitle": "Send GM 🌅",
     "splashImageUrl": "https://base-quest-three.vercel.app/splash.png",
-    "splashBackgroundColor": "#0a0a0f"
+    "splashBackgroundColor": "#0a0a0f",
+    "subtitle": "Send GM on Base",
+    "description": "Follow @cicoz and send your daily GM on-chain on Base network.",
+    "primaryCategory": "social",
+    "tags": ["gm", "base", "onchain", "social"]
   }
 }
