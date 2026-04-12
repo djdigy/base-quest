@@ -20,7 +20,6 @@ contract BaseQuest {
     address public oracle;
 
     mapping(address => Profile) public profiles;
-    mapping(address => mapping(address => bool)) public hasGreeted;
     address[] public allUsers;
     mapping(address => bool) public isRegistered;
 
@@ -99,9 +98,7 @@ contract BaseQuest {
         require(to != msg.sender, "cannot greet yourself");
         require(to != address(0), "invalid address");
         require(bytes(message).length <= 100, "message too long");
-        require(!hasGreeted[msg.sender][to], "already greeted this user");
         if (!isRegistered[to]) _register(to);
-        hasGreeted[msg.sender][to] = true;
         Profile storage sender = profiles[msg.sender];
         Profile storage receiver = profiles[to];
         sender.greetsSent++;
