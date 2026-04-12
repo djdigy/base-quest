@@ -1,11 +1,346 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="base:app_id" content="69da8e51ed56423f0cd3e5b9" />
   <title>AmpBase</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0f;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: #13131a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 500;
+      width: fit-content;
+    }
+
+    .status-badge.loading { background: #1e293b; color: #64748b; }
+    .status-badge.success { background: #052e16; color: #4ade80; }
+    .status-badge.error   { background: #2d0a0a; color: #f87171; }
+    .status-badge.info    { background: #0f172a; color: #60a5fa; }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .dot.pulse {
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: #0d0d14;
+      border: 1px solid #1e1e2e;
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #3b82f6;
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #334155;
+    }
+
+    textarea { resize: none; height: 72px; }
+
+    .char-count {
+      font-size: 11px;
+      color: #475569;
+      text-align: right;
+      margin-top: -8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #greet-btn {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+    }
+
+    #greet-btn:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    #greet-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .tx-link {
+      font-size: 12px;
+      color: #3b82f6;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .tx-link:hover { text-decoration: underline; }
+
+    .not-following-msg {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .not-following-msg a {
+      color: #8b5cf6;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .not-following-msg a:hover { text-decoration: underline; }
+
+    [hidden] { display: none !important; }
+  </style>
 </head>
 <body>
-  <h1>AmpBase</h1>
-  <p>On-chain social graph amplifier on Base</p>
+  <div id="app">
+    <div class="header">
+      <h1>AmpBase</h1>
+      <p>On-chain social graph amplifier on Base</p>
+    </div>
+
+    <div class="card">
+      <div id="status-badge" class="status-badge loading">
+        <span class="dot pulse"></span>
+        <span id="status-text">Connecting to Farcaster...</span>
+      </div>
+
+      <div id="greet-form" hidden>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <label>Greet address</label>
+            <input id="to-address" type="text" placeholder="0x..." autocomplete="off" spellcheck="false" />
+          </div>
+          <div>
+            <label>Message</label>
+            <textarea id="message" placeholder="Say something on-chain..." maxlength="100"></textarea>
+            <div class="char-count"><span id="char-count">0</span> / 100</div>
+          </div>
+          <button id="greet-btn" disabled>Send Greet</button>
+          <div id="tx-result" hidden></div>
+        </div>
+      </div>
+
+      <div id="not-following" hidden>
+        <p class="not-following-msg">
+          Follow <a href="https://warpcast.com/ampbase" target="_blank">@ampbase</a> on Farcaster to unlock the greet feature.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import sdk from 'https://esm.sh/@farcaster/frame-sdk@0.0.31'
+    import { createWalletClient, custom, parseAbi, isAddress } from 'https://esm.sh/viem@2.21.54'
+    import { base } from 'https://esm.sh/viem@2.21.54/chains'
+
+    // ── Config ────────────────────────────────────────────────────────────────
+    const CONTRACT_ADDRESS = '0xee5596a8635b7cc424a7759b7947ff5b013c7a54'
+    const TARGET_FID       = 420806   // cihan0xeth
+
+    const ABI = parseAbi([
+      'function greet(address to, string calldata message) external'
+    ])
+
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+    const statusBadge = document.getElementById('status-badge')
+    const statusText  = document.getElementById('status-text')
+    const greetForm   = document.getElementById('greet-form')
+    const notFollowing = document.getElementById('not-following')
+    const toInput     = document.getElementById('to-address')
+    const msgInput    = document.getElementById('message')
+    const charCount   = document.getElementById('char-count')
+    const greetBtn    = document.getElementById('greet-btn')
+    const txResult    = document.getElementById('tx-result')
+
+    function setStatus(text, type = 'loading') {
+      statusBadge.className = `status-badge ${type}`
+      statusText.textContent = text
+      const dot = statusBadge.querySelector('.dot')
+      dot.className = type === 'loading' ? 'dot pulse' : 'dot'
+    }
+
+    // ── Enable button only when inputs are valid ───────────────────────────────
+    function validateInputs() {
+      greetBtn.disabled = !isAddress(toInput.value.trim()) || msgInput.value.trim().length === 0
+    }
+
+    toInput.addEventListener('input', validateInputs)
+    msgInput.addEventListener('input', () => {
+      charCount.textContent = msgInput.value.length
+      validateInputs()
+    })
+
+    // ── Main ──────────────────────────────────────────────────────────────────
+    async function main() {
+      let fid
+
+      try {
+        const context = await sdk.context
+        fid = context?.user?.fid
+      } catch {
+        // Running outside Farcaster (dev/browser)
+      }
+
+      if (!fid) {
+        setStatus('Open in a Farcaster client', 'error')
+        await sdk.actions.ready().catch(() => {})
+        return
+      }
+
+      setStatus(`Checking follow status…`, 'loading')
+
+      let isFollowing = false
+      try {
+        const res = await fetch(`/api/check-follow?fid=${fid}&targetFid=${TARGET_FID}`)
+        if (!res.ok) throw new Error(`API error ${res.status}`)
+        const data = await res.json()
+        isFollowing = data.isFollowing ?? false
+      } catch (err) {
+        setStatus(`Follow check failed: ${err.message}`, 'error')
+        await sdk.actions.ready().catch(() => {})
+        return
+      }
+
+      if (isFollowing) {
+        setStatus(`Connected · FID ${fid}`, 'success')
+        greetForm.hidden = false
+      } else {
+        setStatus('Follow required', 'info')
+        notFollowing.hidden = false
+      }
+
+      await sdk.actions.ready().catch(() => {})
+
+      // ── Greet handler ────────────────────────────────────────────────────
+      greetBtn.addEventListener('click', async () => {
+        const to      = toInput.value.trim()
+        const message = msgInput.value.trim()
+
+        greetBtn.disabled = true
+        greetBtn.textContent = 'Sending…'
+        txResult.hidden = true
+
+        try {
+          const provider = sdk.wallet.ethProvider
+          const client   = createWalletClient({ chain: base, transport: custom(provider) })
+          const [account] = await client.getAddresses()
+
+          const hash = await client.writeContract({
+            address:      CONTRACT_ADDRESS,
+            abi:          ABI,
+            functionName: 'greet',
+            args:         [to, message],
+            account,
+          })
+
+          txResult.hidden = false
+          txResult.innerHTML = `
+            <a class="tx-link" href="https://basescan.org/tx/${hash}" target="_blank">
+              ✓ Tx sent: ${hash.slice(0, 10)}…${hash.slice(-6)}
+            </a>`
+          setStatus('Greet sent!', 'success')
+        } catch (err) {
+          txResult.hidden = false
+          txResult.textContent = `Error: ${err.shortMessage ?? err.message}`
+          txResult.style.color = '#f87171'
+          txResult.style.fontSize = '13px'
+        } finally {
+          greetBtn.disabled = false
+          greetBtn.textContent = 'Send Greet'
+          validateInputs()
+        }
+      })
+    }
+
+    main()
+  </script>
 </body>
 </html>
