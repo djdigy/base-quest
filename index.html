@@ -230,7 +230,9 @@
 
       <div id="greet-form" hidden>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <button id="greet-btn">Send GM 🌅</button>
+          <button id="connect-btn" hidden>Connect Wallet 🔗</button>
+          <div id="wallet-addr" hidden style="font-size:11px;color:#4ade80;text-align:center;letter-spacing:.02em;"></div>
+          <button id="greet-btn" hidden>Send GM 🌅</button>
           <div id="tx-result" hidden></div>
         </div>
       </div>
@@ -259,6 +261,7 @@
     const CONTRACT_ADDRESS = '0xee5596a8635b7cc424a7759b7947ff5b013c7a54'
     const TARGET_FID       = 1351334  // cicoz
     const GM_ADDRESS       = '0x000000000000000000000000000000000000dEaD'
+    const WC_PROJECT_ID    = 'YOUR_WALLETCONNECT_PROJECT_ID' // cloud.walletconnect.com
 
     const ABI = parseAbi([
       'function greet(address to, string calldata message) external'
@@ -269,10 +272,60 @@
     const statusText  = document.getElementById('status-text')
     const greetForm   = document.getElementById('greet-form')
     const notFollowing = document.getElementById('not-following')
+    const connectBtn     = document.getElementById('connect-btn')
+    const walletAddr     = document.getElementById('wallet-addr')
     const greetBtn       = document.getElementById('greet-btn')
     const txResult       = document.getElementById('tx-result')
     const suggestSection = document.getElementById('suggest-section')
     const suggestList    = document.getElementById('suggest-list')
+
+    // ── Wallet state ──────────────────────────────────────────────────────────
+    let walletProvider = null
+    let inFarcaster    = false
+
+    async function getProvider() {
+      // 1. Farcaster SDK wallet
+      if (inFarcaster) return sdk.wallet.ethProvider
+
+      // 2. Already connected
+      if (walletProvider) return walletProvider
+
+      // 3. Injected (MetaMask / Coinbase Wallet etc.)
+      if (window.ethereum) {
+        await window.ethereum.request({ method: 'eth_requestAccounts' })
+        walletProvider = window.ethereum
+        return walletProvider
+      }
+
+      // 4. WalletConnect
+      const { EthereumProvider } = await import('https://esm.sh/@walletconnect/ethereum-provider')
+      const wc = await EthereumProvider.init({
+        projectId:    WC_PROJECT_ID,
+        chains:       [8453],
+        showQrModal:  true,
+      })
+      await wc.connect()
+      walletProvider = wc
+      return walletProvider
+    }
+
+    async function connectWallet() {
+      connectBtn.disabled  = true
+      connectBtn.textContent = 'Connecting…'
+      try {
+        const provider = await getProvider()
+        const client   = createWalletClient({ chain: base, transport: custom(provider) })
+        const [account] = await client.getAddresses()
+        walletAddr.textContent = account.slice(0, 6) + '…' + account.slice(-4)
+        walletAddr.hidden  = false
+        connectBtn.hidden  = true
+        greetBtn.hidden    = false
+      } catch (err) {
+        connectBtn.disabled  = false
+        connectBtn.textContent = 'Connect Wallet 🔗'
+        console.error('[BaseAmp] Wallet connect failed:', err)
+      }
+    }
 
     function setStatus(text, type = 'loading') {
       statusBadge.className = `status-badge ${type}`
@@ -288,6 +341,7 @@
       try {
         const context = await sdk.context
         fid = context?.user?.fid
+        if (fid) inFarcaster = true
       } catch (err) {
         console.error('[AmpBase] sdk.context error:', err)
       }
@@ -324,6 +378,12 @@
       if (isFollowing) {
         setStatus(`Connected · FID ${fid}`, 'success')
         greetForm.hidden = false
+        if (inFarcaster) {
+          greetBtn.hidden = false
+        } else {
+          connectBtn.hidden = false
+          connectBtn.addEventListener('click', connectWallet)
+        }
       } else {
         setStatus('Follow required', 'info')
         notFollowing.hidden = false
@@ -341,7 +401,7 @@
         txResult.hidden = true
 
         try {
-          const provider = sdk.wallet.ethProvider
+          const provider = await getProvider()
           const client   = createWalletClient({ chain: base, transport: custom(provider) })
           const [account] = await client.getAddresses()
 
