@@ -1,0 +1,17 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "frame": {
+    "version": "1",
+    "name": "Baseamp",
+    "iconUrl": "https://base-quest-three.vercel.app/icon.png",
+    "homeUrl": "https://base-quest-three.vercel.app",
+    "imageUrl": "https://base-quest-three.vercel.app/og.png",
+    "buttonTitle": "Send GM 🌅",
+    "splashImageUrl": "https://base-quest-three.vercel.app/splash.png",
+    "splashBackgroundColor": "#0a0a0f"
+  }
+}
