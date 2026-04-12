@@ -297,16 +297,7 @@
         return walletProvider
       }
 
-      // 4. WalletConnect
-      const { EthereumProvider } = await import('https://esm.sh/@walletconnect/ethereum-provider')
-      const wc = await EthereumProvider.init({
-        projectId:    WC_PROJECT_ID,
-        chains:       [8453],
-        showQrModal:  true,
-      })
-      await wc.connect()
-      walletProvider = wc
-      return walletProvider
+      throw new Error('No wallet found. Please install MetaMask.')
     }
 
     async function connectWallet() {
@@ -420,33 +411,65 @@
             </a>`
           setStatus('GM sent! 🌅', 'success')
 
-          // ── Record GM + suggest follows ──────────────────────────────────
-          await fetch(`/api/record-gm?fid=${fid}`, { method: 'POST' }).catch(() => {})
-
-          const sugRes = await fetch(`/api/suggest-follows?fid=${fid}`).catch(() => null)
-          if (sugRes?.ok) {
-            const { users } = await sugRes.json()
-            if (users?.length > 0) {
-              suggestList.innerHTML = users.map(u => `
-                <div class="suggest-user">
-                  <img src="${u.pfp_url ?? 'https://avatar.vercel.sh/' + u.fid}" alt="" onerror="this.src='https://avatar.vercel.sh/${u.fid}'" />
-                  <div class="info">
-                    <div class="display-name">${u.display_name ?? u.username ?? 'User'}</div>
-                    <div class="username">@${u.username ?? u.fid}</div>
-                  </div>
-                  <button class="follow-btn" data-url="https://warpcast.com/${u.username ?? '~/profiles/' + u.fid}">Follow</button>
-                </div>`).join('')
-
-              suggestList.querySelectorAll('.follow-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                  sdk.actions.openUrl(btn.dataset.url).catch(() => {
-                    window.open(btn.dataset.url, '_blank')
-                  })
-                })
-              })
-
-              suggestSection.hidden = false
+          // ── Record GM ────────────────────────────────────────────────────
+          console.log('[BaseAmp] record-gm → POST /api/record-gm?fid=' + fid)
+          try {
+            const recRes = await fetch(`/api/record-gm?fid=${fid}`, { method: 'POST' })
+            const recData = await recRes.json()
+            if (!recRes.ok) {
+              console.error('[BaseAmp] record-gm failed:', recRes.status, recData)
+            } else {
+              console.log('[BaseAmp] record-gm ok — total GM senders:', recData.total)
             }
+          } catch (recErr) {
+            console.error('[BaseAmp] record-gm network error:', recErr)
+          }
+
+          // ── Suggest follows ───────────────────────────────────────────────
+          console.log('[BaseAmp] suggest-follows → GET /api/suggest-follows?fid=' + fid)
+          try {
+            const sugRes = await fetch(`/api/suggest-follows?fid=${fid}`)
+            const sugData = await sugRes.json()
+            if (!sugRes.ok) {
+              console.error('[BaseAmp] suggest-follows failed:', sugRes.status, sugData)
+            } else {
+              console.log('[BaseAmp] suggest-follows ok — users:', sugData.users)
+              const users = sugData.users ?? []
+              if (users.length > 0) {
+                suggestList.innerHTML = ''
+                users.forEach(u => {
+                  const pfp  = u.pfp_url || `https://avatar.vercel.sh/${u.fid}`
+                  const name = u.display_name || u.username || `FID ${u.fid}`
+                  const uname = u.username || `fid-${u.fid}`
+                  const url  = `https://warpcast.com/${uname}`
+
+                  const card = document.createElement('div')
+                  card.className = 'suggest-user'
+                  card.innerHTML = `
+                    <img src="${pfp}" alt="" />
+                    <div class="info">
+                      <div class="display-name"></div>
+                      <div class="username"></div>
+                    </div>
+                    <button class="follow-btn">Follow</button>`
+
+                  card.querySelector('.display-name').textContent = name
+                  card.querySelector('.username').textContent = '@' + uname
+                  card.querySelector('img').onerror = function () {
+                    this.src = `https://avatar.vercel.sh/${u.fid}`
+                  }
+                  card.querySelector('.follow-btn').addEventListener('click', () => {
+                    sdk.actions.openUrl(url).catch(() => window.open(url, '_blank'))
+                  })
+                  suggestList.appendChild(card)
+                })
+                suggestSection.hidden = false
+              } else {
+                console.log('[BaseAmp] suggest-follows — henüz başka GM gönderen yok')
+              }
+            }
+          } catch (sugErr) {
+            console.error('[BaseAmp] suggest-follows network error:', sugErr)
           }
         } catch (err) {
           txResult.hidden = false
