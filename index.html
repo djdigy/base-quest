@@ -270,6 +270,14 @@
       }
 
       if (!fid) {
+        const urlFid = new URLSearchParams(window.location.search).get('fid')
+        if (urlFid && /^\d+$/.test(urlFid)) {
+          fid = Number(urlFid)
+          console.warn('[AmpBase] FID URL parametresinden alındı:', fid)
+        }
+      }
+
+      if (!fid) {
         console.error('[AmpBase] FID alınamadı — uygulama Farcaster dışında açılmış olabilir.')
         setStatus('Lütfen uygulamayı Farcaster içinden açın', 'error')
         await sdk.actions.ready().catch(() => {})
