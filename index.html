@@ -195,15 +195,11 @@
       <div id="greet-form" hidden>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div>
-            <label>Greet address</label>
-            <input id="to-address" type="text" placeholder="0x..." autocomplete="off" spellcheck="false" />
-          </div>
-          <div>
             <label>Message</label>
-            <textarea id="message" placeholder="Say something on-chain..." maxlength="100"></textarea>
+            <textarea id="message" placeholder="GM! ☀️" maxlength="100"></textarea>
             <div class="char-count"><span id="char-count">0</span> / 100</div>
           </div>
-          <button id="greet-btn" disabled>Send Greet</button>
+          <button id="greet-btn" disabled>Send GM 🌅</button>
           <div id="tx-result" hidden></div>
         </div>
       </div>
@@ -218,12 +214,13 @@
 
   <script type="module">
     import sdk from 'https://esm.sh/@farcaster/frame-sdk@0.0.31'
-    import { createWalletClient, custom, parseAbi, isAddress } from 'https://esm.sh/viem@2.21.54'
+    import { createWalletClient, custom, parseAbi } from 'https://esm.sh/viem@2.21.54'
     import { base } from 'https://esm.sh/viem@2.21.54/chains'
 
     // ── Config ────────────────────────────────────────────────────────────────
     const CONTRACT_ADDRESS = '0xee5596a8635b7cc424a7759b7947ff5b013c7a54'
     const TARGET_FID       = 1351334  // cicoz
+    const GM_ADDRESS       = '0x000000000000000000000000000000000000dEaD'
 
     const ABI = parseAbi([
       'function greet(address to, string calldata message) external'
@@ -234,7 +231,6 @@
     const statusText  = document.getElementById('status-text')
     const greetForm   = document.getElementById('greet-form')
     const notFollowing = document.getElementById('not-following')
-    const toInput     = document.getElementById('to-address')
     const msgInput    = document.getElementById('message')
     const charCount   = document.getElementById('char-count')
     const greetBtn    = document.getElementById('greet-btn')
@@ -247,12 +243,11 @@
       dot.className = type === 'loading' ? 'dot pulse' : 'dot'
     }
 
-    // ── Enable button only when inputs are valid ───────────────────────────────
+    // ── Enable button only when message is filled ─────────────────────────────
     function validateInputs() {
-      greetBtn.disabled = !isAddress(toInput.value.trim()) || msgInput.value.trim().length === 0
+      greetBtn.disabled = msgInput.value.trim().length === 0
     }
 
-    toInput.addEventListener('input', validateInputs)
     msgInput.addEventListener('input', () => {
       charCount.textContent = msgInput.value.length
       validateInputs()
@@ -310,7 +305,7 @@
 
       // ── Greet handler ────────────────────────────────────────────────────
       greetBtn.addEventListener('click', async () => {
-        const to      = toInput.value.trim()
+        const to      = GM_ADDRESS
         const message = msgInput.value.trim()
 
         greetBtn.disabled = true
@@ -343,7 +338,7 @@
           txResult.style.fontSize = '13px'
         } finally {
           greetBtn.disabled = false
-          greetBtn.textContent = 'Send Greet'
+          greetBtn.textContent = 'Send GM 🌅'
           validateInputs()
         }
       })
