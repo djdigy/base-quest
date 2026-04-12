@@ -265,12 +265,13 @@
       try {
         const context = await sdk.context
         fid = context?.user?.fid
-      } catch {
-        // Running outside Farcaster (dev/browser)
+      } catch (err) {
+        console.error('[AmpBase] sdk.context error:', err)
       }
 
       if (!fid) {
-        setStatus('Open in a Farcaster client', 'error')
+        console.error('[AmpBase] FID alınamadı — uygulama Farcaster dışında açılmış olabilir.')
+        setStatus('Lütfen uygulamayı Farcaster içinden açın', 'error')
         await sdk.actions.ready().catch(() => {})
         return
       }
