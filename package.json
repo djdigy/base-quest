@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "sharp": "^0.34.5"
+  },
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  }
+}

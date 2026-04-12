@@ -177,6 +177,42 @@
     .not-following-msg a:hover { text-decoration: underline; }
 
     [hidden] { display: none !important; }
+
+    .suggest-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0d0d14;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .suggest-user img {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .suggest-user .info { flex: 1; min-width: 0; }
+    .suggest-user .display-name { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .suggest-user .username { font-size: 11px; color: #475569; }
+
+    .follow-btn {
+      flex-shrink: 0;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      cursor: pointer;
+      width: auto;
+    }
+
+    .follow-btn:hover { opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -197,6 +233,13 @@
           <button id="greet-btn">Send GM 🌅</button>
           <div id="tx-result" hidden></div>
         </div>
+      </div>
+
+      <div id="suggest-section" hidden>
+        <div style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">
+          GM atanlar — takip et 👋
+        </div>
+        <div id="suggest-list" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
 
       <div id="not-following" hidden>
@@ -226,8 +269,10 @@
     const statusText  = document.getElementById('status-text')
     const greetForm   = document.getElementById('greet-form')
     const notFollowing = document.getElementById('not-following')
-    const greetBtn    = document.getElementById('greet-btn')
-    const txResult    = document.getElementById('tx-result')
+    const greetBtn       = document.getElementById('greet-btn')
+    const txResult       = document.getElementById('tx-result')
+    const suggestSection = document.getElementById('suggest-section')
+    const suggestList    = document.getElementById('suggest-list')
 
     function setStatus(text, type = 'loading') {
       statusBadge.className = `status-badge ${type}`
@@ -313,7 +358,36 @@
             <a class="tx-link" href="https://basescan.org/tx/${hash}" target="_blank">
               ✓ Tx sent: ${hash.slice(0, 10)}…${hash.slice(-6)}
             </a>`
-          setStatus('Greet sent!', 'success')
+          setStatus('GM sent! 🌅', 'success')
+
+          // ── Record GM + suggest follows ──────────────────────────────────
+          await fetch(`/api/record-gm?fid=${fid}`, { method: 'POST' }).catch(() => {})
+
+          const sugRes = await fetch(`/api/suggest-follows?fid=${fid}`).catch(() => null)
+          if (sugRes?.ok) {
+            const { users } = await sugRes.json()
+            if (users?.length > 0) {
+              suggestList.innerHTML = users.map(u => `
+                <div class="suggest-user">
+                  <img src="${u.pfp_url ?? 'https://avatar.vercel.sh/' + u.fid}" alt="" onerror="this.src='https://avatar.vercel.sh/${u.fid}'" />
+                  <div class="info">
+                    <div class="display-name">${u.display_name ?? u.username ?? 'User'}</div>
+                    <div class="username">@${u.username ?? u.fid}</div>
+                  </div>
+                  <button class="follow-btn" data-url="https://warpcast.com/${u.username ?? '~/profiles/' + u.fid}">Follow</button>
+                </div>`).join('')
+
+              suggestList.querySelectorAll('.follow-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  sdk.actions.openUrl(btn.dataset.url).catch(() => {
+                    window.open(btn.dataset.url, '_blank')
+                  })
+                })
+              })
+
+              suggestSection.hidden = false
+            }
+          }
         } catch (err) {
           txResult.hidden = false
           txResult.textContent = `Error: ${err.shortMessage ?? err.message}`
