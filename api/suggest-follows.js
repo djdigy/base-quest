@@ -2,7 +2,12 @@
 // Returns up to 5 random BaseAmp users (excluding viewer) enriched via Neynar
 // Required env vars: KV_REST_API_URL, KV_REST_API_TOKEN, NEYNAR_API_KEY
 
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url:   process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+})
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -12,7 +17,7 @@ export default async function handler(req, res) {
   const viewerFid = req.query.fid ? Number(req.query.fid) : null
 
   // Fetch all FIDs that have sent GM
-  const allFids = await kv.smembers('gm:fids')
+  const allFids = await redis.smembers('gm:fids')
 
   // Exclude the viewer and shuffle
   const candidates = allFids

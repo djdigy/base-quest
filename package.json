@@ -3,6 +3,7 @@
     "sharp": "^0.34.5"
   },
   "dependencies": {
+    "@upstash/redis": "^1.37.0",
     "@vercel/kv": "^3.0.0"
   }
 }
