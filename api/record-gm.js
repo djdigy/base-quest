@@ -1,11 +1,10 @@
 // POST /api/record-gm?fid=<fid>
-// Records the FID that sent a GM into Upstash Redis set "gm:fids"
-// Required env vars: KV_REST_API_URL, KV_REST_API_TOKEN
-
+// 1. GM: gm:fids setine ekle
+// 2. GM: gm:verified setine ekle (follow verification)
 import { Redis } from '@upstash/redis'
 
 const redis = new Redis({
-  url:   process.env.KV_REST_API_URL,
+  url: process.env.KV_REST_API_URL,
   token: process.env.KV_REST_API_TOKEN,
 })
 
@@ -19,9 +18,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Valid numeric fid is required' })
   }
 
-  await redis.sadd('gm:fids', Number(fid))
+  const fidNum = Number(fid)
+
+  const isReturning = await redis.sismember('gm:fids', fidNum)
+
+  await redis.sadd('gm:fids', fidNum)
+
+  let verified = false
+  if (isReturning) {
+    await redis.sadd('gm:verified', fidNum)
+    verified = true
+  }
+
   const total = await redis.scard('gm:fids')
 
   res.setHeader('Cache-Control', 'no-store')
-  return res.status(200).json({ ok: true, total })
+  return res.status(200).json({ ok: true, total, verified })
 }
