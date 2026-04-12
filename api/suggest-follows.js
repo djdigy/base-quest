@@ -1,11 +1,9 @@
 // GET /api/suggest-follows?fid=<viewer_fid>
-// Returns up to 5 random BaseAmp users (excluding viewer) enriched via Neynar
-// Required env vars: KV_REST_API_URL, KV_REST_API_TOKEN, NEYNAR_API_KEY
-
+// Verified GM'ciler once, sonra normal GM'ciler -- toplam 5 kisi
 import { Redis } from '@upstash/redis'
 
 const redis = new Redis({
-  url:   process.env.KV_REST_API_URL,
+  url: process.env.KV_REST_API_URL,
   token: process.env.KV_REST_API_TOKEN,
 })
 
@@ -16,37 +14,31 @@ export default async function handler(req, res) {
 
   const viewerFid = req.query.fid ? Number(req.query.fid) : null
 
-  // Fetch all FIDs that have sent GM
-  const allFids = await redis.smembers('gm:fids')
+  const [allFids, verifiedFids] = await Promise.all([
+    redis.smembers('gm:fids'),
+    redis.smembers('gm:verified'),
+  ])
 
-  // Exclude the viewer and shuffle
-  const candidates = allFids
-    .map(Number)
-    .filter(f => f !== viewerFid)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 5)
+  const verifiedSet = new Set(verifiedFids.map(Number))
+  const shuffle = arr => arr.sort(() => Math.random() - 0.5)
 
-  if (candidates.length === 0) {
-    return res.status(200).json({ users: [] })
-  }
+  const verified = shuffle(verifiedFids.map(Number).filter(f => f !== viewerFid))
+  const others = shuffle(allFids.map(Number).filter(f => f !== viewerFid && !verifiedSet.has(f)))
+  const candidates = [...verified, ...others].slice(0, 5)
 
-  // Enrich with Neynar profile data
+  if (candidates.length === 0) return res.status(200).json({ users: [] })
+
   const apiKey = process.env.NEYNAR_API_KEY
-  if (!apiKey) {
-    return res.status(200).json({ users: candidates.map(fid => ({ fid })) })
-  }
+  if (!apiKey) return res.status(200).json({ users: candidates.map(fid => ({ fid })) })
 
   const url = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${candidates.join(',')}&viewer_fid=${viewerFid ?? 1}`
   const neynarRes = await fetch(url, {
     headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
   })
 
-  if (!neynarRes.ok) {
-    return res.status(200).json({ users: candidates.map(fid => ({ fid })) })
-  }
+  if (!neynarRes.ok) return res.status(200).json({ users: candidates.map(fid => ({ fid })) })
 
   const data = await neynarRes.json()
-
   res.setHeader('Cache-Control', 'no-store')
-  return res.status(200).json({ users: data.users ?? [] })
+  return res.status(200).json({ users: data.users ?? [], verifiedFids: verifiedFids.map(Number) })
 }
