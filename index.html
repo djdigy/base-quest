@@ -7,75 +7,46 @@
   <title>BaseAmp</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0a0a0f;
-      color: #e2e8f0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      background: #0a0a0f; color: #e2e8f0;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
     }
-
-    #app { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
-
+    #app { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
     .header { text-align: center; }
-    .header h1 {
-      font-size: 28px; font-weight: 800;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
+    .header h1 { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .header p { font-size: 13px; color: #64748b; margin-top: 4px; }
-
-    .card {
-      background: #13131a; border: 1px solid #1e1e2e;
-      border-radius: 16px; padding: 20px;
-      display: flex; flex-direction: column; gap: 14px;
-    }
-
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; padding: 6px 12px; border-radius: 999px;
-      font-weight: 500; width: fit-content;
-    }
+    .card { background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 12px; border-radius: 999px; font-weight: 500; width: fit-content; }
     .status-badge.loading { background: #1e293b; color: #64748b; }
     .status-badge.success { background: #052e16; color: #4ade80; }
-    .status-badge.error   { background: #2d0a0a; color: #f87171; }
-    .status-badge.info    { background: #0f172a; color: #60a5fa; }
-
+    .status-badge.error { background: #2d0a0a; color: #f87171; }
+    .status-badge.info { background: #0f172a; color: #60a5fa; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
     .dot.pulse { animation: pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-    button {
-      width: 100%; padding: 12px; border-radius: 12px;
-      font-size: 15px; font-weight: 700; border: none;
-      cursor: pointer; transition: all 0.2s;
-    }
+    button { width: 100%; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
     #greet-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
     #greet-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-    #greet-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    #greet-btn.gmed-today {
-      background: linear-gradient(135deg, #16a34a, #15803d);
-      cursor: default;
-    }
-
+    #greet-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    #greet-btn.gmed-today { background: linear-gradient(135deg, #16a34a, #15803d); cursor: default; }
+    #greet-btn.locked { background: #1e1e2e; color: #475569; cursor: not-allowed; }
     .tx-link { font-size: 12px; color: #3b82f6; text-decoration: none; word-break: break-all; }
     .tx-link:hover { text-decoration: underline; }
-
     .not-following-msg { text-align: center; color: #64748b; font-size: 14px; line-height: 1.6; }
     .not-following-msg a { color: #8b5cf6; text-decoration: none; font-weight: 600; }
-
     [hidden] { display: none !important; }
-
-    /* ── Stats Card ── */
-    .stats-card {
-      background: #0d0d14; border: 1px solid #1e1e2e;
-      border-radius: 12px; padding: 14px;
-      display: flex; flex-direction: column; gap: 10px;
-    }
+    .streak-banner { background: linear-gradient(135deg, #1c1208, #2d1a00); border: 1px solid #78350f; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .streak-left { display: flex; flex-direction: column; gap: 2px; }
+    .streak-label { font-size: 11px; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .streak-count { font-size: 28px; font-weight: 800; color: #f97316; line-height: 1; }
+    .streak-sub { font-size: 11px; color: #78350f; }
+    .streak-emoji { font-size: 36px; }
+    .streak-banner.done { background: linear-gradient(135deg, #052e16, #064e3b); border-color: #16a34a; }
+    .streak-banner.done .streak-label { color: #4ade80; }
+    .streak-banner.done .streak-count { color: #4ade80; }
+    .streak-banner.done .streak-sub { color: #16a34a; }
+    .stats-card { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .stats-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
     .stat-row { display: flex; flex-direction: column; gap: 4px; }
     .stat-label-row { display: flex; justify-content: space-between; align-items: center; }
@@ -84,50 +55,22 @@
     .stat-value span { color: #475569; font-weight: 400; }
     .progress-bar { width: 100%; height: 4px; background: #1e1e2e; border-radius: 99px; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.6s ease; }
-
-    /* ── Streak Banner ── */
-    .streak-banner {
-      background: linear-gradient(135deg, #1c1208, #2d1a00);
-      border: 1px solid #78350f;
-      border-radius: 12px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .streak-left { display: flex; flex-direction: column; gap: 2px; }
-    .streak-label { font-size: 11px; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-    .streak-count { font-size: 28px; font-weight: 800; color: #f97316; line-height: 1; }
-    .streak-sub { font-size: 11px; color: #78350f; }
-    .streak-emoji { font-size: 36px; }
-    .streak-banner.done {
-      background: linear-gradient(135deg, #052e16, #064e3b);
-      border-color: #16a34a;
-    }
-    .streak-banner.done .streak-label { color: #4ade80; }
-    .streak-banner.done .streak-count { color: #4ade80; }
-    .streak-banner.done .streak-sub { color: #16a34a; }
-
-    /* ── Follow suggestions ── */
-    .suggest-user {
-      display: flex; align-items: center; gap: 10px;
-      background: #0d0d14; border: 1px solid #1e1e2e;
-      border-radius: 12px; padding: 10px 12px;
-    }
-    .suggest-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-    .suggest-user .info { flex: 1; min-width: 0; }
-    .suggest-user .display-name { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .suggest-user .username { font-size: 11px; color: #475569; }
-
-    .follow-btn {
-      flex-shrink: 0; padding: 5px 12px; font-size: 12px; font-weight: 700;
-      border-radius: 999px; border: none;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      color: white; cursor: pointer; width: auto;
-    }
+    .follow-gate { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .follow-gate-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }
+    .follow-counter { font-size: 12px; font-weight: 700; color: #3b82f6; }
+    .follow-counter.done { color: #4ade80; }
+    .follow-user { display: flex; align-items: center; gap: 10px; background: #13131a; border: 1px solid #1e1e2e; border-radius: 10px; padding: 8px 10px; transition: border-color 0.2s; }
+    .follow-user.followed { border-color: #16a34a; background: #052e16; }
+    .follow-user img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .follow-user .info { flex: 1; min-width: 0; }
+    .follow-user .display-name { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .follow-user .username { font-size: 11px; color: #475569; }
+    .follow-btn { flex-shrink: 0; padding: 5px 14px; font-size: 12px; font-weight: 700; border-radius: 999px; border: none; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; cursor: pointer; width: auto; transition: all 0.2s; }
     .follow-btn:hover { opacity: 0.85; }
-
-    .social-hint { margin-top: 10px; font-size: 12px; color: #64748b; text-align: center; line-height: 1.6; }
+    .follow-btn.followed { background: #052e16; color: #4ade80; border: 1px solid #16a34a; cursor: default; }
+    .check-btn { width: 100%; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1px solid #1e1e2e; background: #0d0d14; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .check-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+    .social-hint { font-size: 12px; color: #475569; text-align: center; line-height: 1.6; }
     .social-hint strong { color: #8b5cf6; }
   </style>
 </head>
@@ -137,24 +80,19 @@
       <h1>BaseAmp</h1>
       <p>On-chain social graph amplifier on Base</p>
     </div>
-
     <div class="card">
       <div id="status-badge" class="status-badge loading">
         <span class="dot pulse"></span>
         <span id="status-text">Connecting to Farcaster...</span>
       </div>
-
-      <!-- Streak Banner -->
       <div id="streak-banner" class="streak-banner" hidden>
         <div class="streak-left">
-          <div class="streak-label" id="streak-label">GM Streak</div>
+          <div class="streak-label" id="streak-label">🔥 GM Streak</div>
           <div class="streak-count" id="streak-count">0</div>
-          <div class="streak-sub" id="streak-sub">gün üst üste</div>
+          <div class="streak-sub" id="streak-sub">Henüz başlamadı</div>
         </div>
-        <div class="streak-emoji" id="streak-emoji">🔥</div>
+        <div class="streak-emoji" id="streak-emoji">💤</div>
       </div>
-
-      <!-- Stats Card -->
       <div id="stats-card" class="stats-card" hidden>
         <div class="stats-title">📊 Airdrop İstatistiklerin</div>
         <div class="stat-row">
@@ -172,8 +110,15 @@
           <div class="progress-bar"><div class="progress-fill" id="progress-followers" style="width:0%"></div></div>
         </div>
       </div>
-
-      <!-- GM Form -->
+      <div id="follow-gate" class="follow-gate" hidden>
+        <div class="follow-gate-title">
+          <span>👥 Önce 3 kişiyi follow et</span>
+          <span class="follow-counter" id="follow-counter">0 / 3</span>
+        </div>
+        <div id="follow-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <button class="check-btn" id="check-follows-btn">✓ Follow ettim, kontrol et</button>
+        <div class="social-hint">Follow et → GM at → <strong>sen de önerilenlere gir!</strong></div>
+      </div>
       <div id="greet-form" hidden>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button id="connect-btn" hidden>Connect Wallet 🔗</button>
@@ -182,57 +127,42 @@
           <div id="tx-result" hidden></div>
         </div>
       </div>
-
-      <!-- Follow Suggestions -->
-      <div id="suggest-section" hidden>
-        <div style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">
-          GM atanlar — takip et 👋
-        </div>
-        <div id="suggest-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div class="social-hint">
-          🔁 Bu kişileri follow et, sonra <strong>tekrar GM at</strong> → 10 kişinin önüne çıkarsın!
-        </div>
-      </div>
-
-      <!-- Not Following -->
       <div id="not-following" hidden>
         <p class="not-following-msg">
-          Follow <a href="https://warpcast.com/cicoz" target="_blank">@cicoz</a> on Farcaster to unlock the greet feature.
+          Follow <a href="https://warpcast.com/cicoz" target="_blank">@cicoz</a> on Farcaster to unlock BaseAmp.
         </p>
       </div>
     </div>
   </div>
-
   <script type="module">
     import sdk from 'https://esm.sh/@farcaster/frame-sdk@0.0.31'
     import { createWalletClient, custom, parseAbi } from 'https://esm.sh/viem@2.21.54'
     import { base } from 'https://esm.sh/viem@2.21.54/chains'
 
     const CONTRACT_ADDRESS = '0xc9827a7aE42D7944d60A4A3ACe569d98f8acD58d'
-    const TARGET_FID       = 1351334
-    const GM_ADDRESS       = '0x000000000000000000000000000000000000dEaD'
+    const TARGET_FID = 1351334
+    const GM_ADDRESS = '0x000000000000000000000000000000000000dEaD'
     const ABI = parseAbi(['function greet(address to, string calldata message) external'])
 
-    const statusBadge    = document.getElementById('status-badge')
-    const statusText     = document.getElementById('status-text')
-    const greetForm      = document.getElementById('greet-form')
-    const notFollowing   = document.getElementById('not-following')
-    const connectBtn     = document.getElementById('connect-btn')
-    const walletAddr     = document.getElementById('wallet-addr')
-    const greetBtn       = document.getElementById('greet-btn')
-    const txResult       = document.getElementById('tx-result')
-    const suggestSection = document.getElementById('suggest-section')
-    const suggestList    = document.getElementById('suggest-list')
-    const statsCard      = document.getElementById('stats-card')
-    const streakBanner   = document.getElementById('streak-banner')
-    const streakCount    = document.getElementById('streak-count')
-    const streakLabel    = document.getElementById('streak-label')
-    const streakSub      = document.getElementById('streak-sub')
-    const streakEmoji    = document.getElementById('streak-emoji')
+    const statusBadge = document.getElementById('status-badge')
+    const statusText = document.getElementById('status-text')
+    const greetForm = document.getElementById('greet-form')
+    const notFollowing = document.getElementById('not-following')
+    const connectBtn = document.getElementById('connect-btn')
+    const walletAddr = document.getElementById('wallet-addr')
+    const greetBtn = document.getElementById('greet-btn')
+    const txResult = document.getElementById('tx-result')
+    const statsCard = document.getElementById('stats-card')
+    const streakBanner = document.getElementById('streak-banner')
+    const followGate = document.getElementById('follow-gate')
+    const followList = document.getElementById('follow-list')
+    const followCounter = document.getElementById('follow-counter')
+    const checkFollowsBtn = document.getElementById('check-follows-btn')
 
-    let walletProvider   = null
-    let inFarcaster      = false
+    let walletProvider = null
+    let inFarcaster = false
     let connectedAddress = null
+    let currentFid = null
 
     function setStatus(text, type = 'loading') {
       statusBadge.className = `status-badge ${type}`
@@ -248,36 +178,103 @@
 
     function updateStreakUI(streak, gmmedToday) {
       streakBanner.hidden = false
-
-      streakCount.textContent = streak
-
-      // Emoji streak sayisina gore
-      if (streak === 0) {
-        streakEmoji.textContent = '💤'
-      } else if (streak < 3) {
-        streakEmoji.textContent = '🔥'
-      } else if (streak < 7) {
-        streakEmoji.textContent = '🔥🔥'
-      } else if (streak < 30) {
-        streakEmoji.textContent = '🔥🔥🔥'
-      } else {
-        streakEmoji.textContent = '👑'
-      }
-
+      document.getElementById('streak-count').textContent = streak
+      const emoji = streak === 0 ? '💤' : streak < 3 ? '🔥' : streak < 7 ? '🔥🔥' : streak < 30 ? '🔥🔥🔥' : '👑'
+      document.getElementById('streak-emoji').textContent = emoji
       if (gmmedToday) {
         streakBanner.classList.add('done')
-        streakLabel.textContent = '✅ Bugün GM Atıldı!'
-        streakSub.textContent = `${streak} günlük seri devam ediyor`
-        // Buton yesil yap
-        greetBtn.textContent = '✅ Bugün GM Attın!'
-        greetBtn.classList.add('gmed-today')
-        greetBtn.disabled = true
+        document.getElementById('streak-label').textContent = '✅ Bugün GM Atıldı!'
+        document.getElementById('streak-sub').textContent = `${streak} günlük seri devam ediyor`
       } else {
         streakBanner.classList.remove('done')
-        streakLabel.textContent = '🔥 GM Streak'
-        streakSub.textContent = streak > 0
-          ? `${streak} günlük seri — bugün at!`
-          : 'Henüz başlamadı — GM at!'
+        document.getElementById('streak-label').textContent = '🔥 GM Streak'
+        document.getElementById('streak-sub').textContent = streak > 0 ? `${streak} günlük seri — bugün at!` : 'Henüz başlamadı — GM at!'
+      }
+    }
+
+    function renderFollowList(users) {
+      followList.innerHTML = ''
+      users.forEach(u => {
+        const pfp = u.pfp_url || `https://avatar.vercel.sh/${u.fid}`
+        const name = u.display_name || u.username || `FID ${u.fid}`
+        const uname = u.username || `fid-${u.fid}`
+        const url = `https://warpcast.com/${uname}`
+        const isFollowed = u.isFollowed || false
+        const row = document.createElement('div')
+        row.className = `follow-user${isFollowed ? ' followed' : ''}`
+        row.dataset.fid = u.fid
+        row.innerHTML = `
+          <img src="${pfp}" alt="" />
+          <div class="info">
+            <div class="display-name"></div>
+            <div class="username"></div>
+          </div>
+          <button class="follow-btn${isFollowed ? ' followed' : ''}" data-url="${url}">
+            ${isFollowed ? '✅ Following' : 'Follow'}
+          </button>`
+        row.querySelector('.display-name').textContent = name
+        row.querySelector('.username').textContent = '@' + uname
+        row.querySelector('img').onerror = function () { this.src = `https://avatar.vercel.sh/${u.fid}` }
+        const btn = row.querySelector('.follow-btn')
+        if (!isFollowed) {
+          btn.addEventListener('click', () => {
+            sdk.actions.openUrl(url).catch(() => window.open(url, '_blank'))
+            setTimeout(() => {
+              row.classList.add('followed')
+              btn.textContent = '✅ Following'
+              btn.classList.add('followed')
+            }, 1500)
+          })
+        }
+        followList.appendChild(row)
+      })
+      const followedCount = users.filter(u => u.isFollowed).length
+      followCounter.textContent = `${followedCount} / ${users.length}`
+      followCounter.className = `follow-counter${followedCount >= users.length ? ' done' : ''}`
+    }
+
+    async function checkFollows() {
+      checkFollowsBtn.disabled = true
+      checkFollowsBtn.textContent = 'Kontrol ediliyor...'
+      try {
+        const res = await fetch(`/api/suggest-follows?fid=${currentFid}`)
+        const data = await res.json()
+        renderFollowList(data.users)
+        if (data.canGM) {
+          followGate.hidden = true
+          greetBtn.disabled = false
+          greetBtn.classList.remove('locked')
+          greetBtn.textContent = 'Send GM 🌅'
+          setStatus('3/3 Follow tamam! GM atabilirsin 🎉', 'success')
+        } else {
+          checkFollowsBtn.textContent = `✓ Follow ettim, kontrol et (${data.followedCount}/3)`
+          checkFollowsBtn.disabled = false
+        }
+      } catch (e) {
+        checkFollowsBtn.textContent = '✓ Follow ettim, kontrol et'
+        checkFollowsBtn.disabled = false
+      }
+    }
+
+    async function loadFollowGate(fid) {
+      try {
+        const res = await fetch(`/api/suggest-follows?fid=${fid}`)
+        const data = await res.json()
+        if (data.users.length === 0 || data.canGM) {
+          followGate.hidden = true
+          greetBtn.disabled = false
+          greetBtn.classList.remove('locked')
+          return
+        }
+        followGate.hidden = false
+        renderFollowList(data.users)
+        greetBtn.classList.add('locked')
+        greetBtn.disabled = true
+        greetBtn.textContent = `🔒 Önce 3 kişiyi follow et (${data.followedCount || 0}/3)`
+        checkFollowsBtn.addEventListener('click', checkFollows)
+      } catch (e) {
+        followGate.hidden = true
+        greetBtn.disabled = false
       }
     }
 
@@ -289,22 +286,24 @@
         const res = await fetch(`/api/stats?${params}`)
         if (!res.ok) return
         const data = await res.json()
-
         statsCard.hidden = false
         updateStreakUI(data.streak || 0, data.gmmedToday || false)
-
         if (data.baseTx !== null && data.baseTx !== undefined) {
           document.getElementById('stat-tx').innerHTML = `${data.baseTx} <span>/ 1000</span>`
           updateProgressBar('progress-tx', data.baseTx, 1000)
         }
-
         if (data.farcaster?.followers !== undefined) {
           document.getElementById('stat-followers').innerHTML = `${data.farcaster.followers} <span>/ 1000</span>`
           updateProgressBar('progress-followers', data.farcaster.followers, 1000)
         }
-      } catch (e) {
-        console.error('[BaseAmp] stats error:', e)
-      }
+        if (data.gmmedToday) {
+          greetBtn.textContent = '✅ Bugün GM Attın!'
+          greetBtn.classList.add('gmed-today')
+          greetBtn.classList.remove('locked')
+          greetBtn.disabled = true
+          followGate.hidden = true
+        }
+      } catch (e) {}
     }
 
     async function getProvider() {
@@ -339,7 +338,6 @@
 
     async function main() {
       let fid
-
       try {
         const context = await sdk.context
         fid = context?.user?.fid
@@ -357,6 +355,7 @@
         return
       }
 
+      currentFid = fid
       setStatus('Checking follow status…', 'loading')
 
       let isFollowing = false
@@ -371,109 +370,64 @@
         return
       }
 
-      if (isFollowing) {
-        setStatus(`Connected · FID ${fid}`, 'success')
-        greetForm.hidden = false
-
-        if (inFarcaster) {
-          greetBtn.hidden = false
-          try {
-            const provider = sdk.wallet.ethProvider
-            const client = createWalletClient({ chain: base, transport: custom(provider) })
-            const [account] = await client.getAddresses()
-            connectedAddress = account
-            loadStats(fid, account)
-          } catch {
-            loadStats(fid, null)
-          }
-        } else {
-          connectBtn.hidden = false
-          connectBtn.addEventListener('click', connectWallet)
-          loadStats(fid, null)
-        }
-      } else {
+      if (!isFollowing) {
         setStatus('Follow required', 'info')
         notFollowing.hidden = false
+        await sdk.actions.ready().catch(() => {})
+        return
+      }
+
+      setStatus(`Connected · FID ${fid}`, 'success')
+      greetForm.hidden = false
+
+      if (inFarcaster) {
+        greetBtn.hidden = false
+        try {
+          const provider = sdk.wallet.ethProvider
+          const client = createWalletClient({ chain: base, transport: custom(provider) })
+          const [account] = await client.getAddresses()
+          connectedAddress = account
+          await Promise.all([loadStats(fid, account), loadFollowGate(fid)])
+        } catch {
+          await Promise.all([loadStats(fid, null), loadFollowGate(fid)])
+        }
+      } else {
+        connectBtn.hidden = false
+        connectBtn.addEventListener('click', connectWallet)
+        await Promise.all([loadStats(fid, null), loadFollowGate(fid)])
+        greetBtn.hidden = false
       }
 
       await sdk.actions.ready().catch(() => {})
 
       greetBtn.addEventListener('click', async () => {
-        if (greetBtn.classList.contains('gmed-today')) return
-
+        if (greetBtn.disabled || greetBtn.classList.contains('gmed-today') || greetBtn.classList.contains('locked')) return
         greetBtn.disabled = true
         greetBtn.textContent = 'Sending…'
         txResult.hidden = true
-
         try {
           const provider = await getProvider()
           const client = createWalletClient({ chain: base, transport: custom(provider) })
           const [account] = await client.getAddresses()
           connectedAddress = account
-
           const hash = await client.writeContract({
-            address: CONTRACT_ADDRESS,
-            abi: ABI,
-            functionName: 'greet',
-            args: [GM_ADDRESS, 'GM! gm gm 🌅'],
-            account,
+            address: CONTRACT_ADDRESS, abi: ABI,
+            functionName: 'greet', args: [GM_ADDRESS, 'GM! gm gm 🌅'], account,
           })
-
           txResult.hidden = false
           txResult.innerHTML = `<a class="tx-link" href="https://basescan.org/tx/${hash}" target="_blank">✓ Tx: ${hash.slice(0,10)}…${hash.slice(-6)}</a>`
-
-          // Record GM + streak hesapla
           try {
             const recRes = await fetch(`/api/record-gm?fid=${fid}`, { method: 'POST' })
             const recData = await recRes.json()
             const newStreak = recData.streak || 1
-            const alreadyToday = recData.alreadyGMedToday || false
             updateStreakUI(newStreak, true)
-            if (recData.verified) {
-              setStatus(`GM sent! ✅ Verified! 🔥 ${newStreak} gün streak`, 'success')
-            } else {
-              setStatus(`GM sent! 🌅 🔥 ${newStreak} gün streak`, 'success')
-            }
-          } catch (e) {
-            setStatus('GM sent! 🌅', 'success')
-          }
-
-          // Stats güncelle
+            greetBtn.textContent = '✅ Bugün GM Attın!'
+            greetBtn.classList.add('gmed-today')
+            greetBtn.classList.remove('locked')
+            followGate.hidden = true
+            setStatus(`GM sent! 🌅 🔥 ${newStreak} gün streak`, 'success')
+          } catch (e) { setStatus('GM sent! 🌅', 'success') }
           loadStats(fid, connectedAddress)
-
-          // Suggest follows
-          try {
-            const sugRes = await fetch(`/api/suggest-follows?fid=${fid}`)
-            const sugData = await sugRes.json()
-            const users = sugData.users ?? []
-            if (users.length > 0) {
-              suggestList.innerHTML = ''
-              users.forEach(u => {
-                const pfp   = u.pfp_url || `https://avatar.vercel.sh/${u.fid}`
-                const name  = u.display_name || u.username || `FID ${u.fid}`
-                const uname = u.username || `fid-${u.fid}`
-                const url   = `https://warpcast.com/${uname}`
-                const card  = document.createElement('div')
-                card.className = 'suggest-user'
-                card.innerHTML = `
-                  <img src="${pfp}" alt="" />
-                  <div class="info">
-                    <div class="display-name"></div>
-                    <div class="username"></div>
-                  </div>
-                  <button class="follow-btn">Follow</button>`
-                card.querySelector('.display-name').textContent = name
-                card.querySelector('.username').textContent = '@' + uname
-                card.querySelector('img').onerror = function () { this.src = `https://avatar.vercel.sh/${u.fid}` }
-                card.querySelector('.follow-btn').addEventListener('click', () => {
-                  sdk.actions.openUrl(url).catch(() => window.open(url, '_blank'))
-                })
-                suggestList.appendChild(card)
-              })
-              suggestSection.hidden = false
-            }
-          } catch (e) {}
-
         } catch (err) {
           txResult.hidden = false
           txResult.textContent = `Error: ${err.shortMessage ?? err.message}`
