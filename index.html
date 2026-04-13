@@ -417,7 +417,14 @@
         try {
           const provider = await getProvider()
           const client = createWalletClient({ chain: base, transport: custom(provider) })
-          const [account] = await client.getAddresses()
+          // Hesap listesini iste - bazı provider'larda gerekli
+          let accounts = await client.getAddresses()
+          if (!accounts || accounts.length === 0) {
+            await provider.request({ method: 'eth_requestAccounts' })
+            accounts = await client.getAddresses()
+          }
+          const account = accounts[0]
+          if (!account) throw new Error('No wallet account found')
           connectedAddress = account
           const hash = await client.writeContract({
             address: CONTRACT_ADDRESS, abi: ABI,
