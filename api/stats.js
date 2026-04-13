@@ -33,17 +33,26 @@ export default async function handler(req, res) {
   const { fid, address } = req.query
   if (!fid && !address) return res.status(400).json({ error: 'fid or address required' })
 
-  const [txCount, fcStats, streak] = await Promise.all([
+  const fidNum = fid ? Number(fid) : null
+
+  const [txCount, fcStats, streak, lastGmDate, verified] = await Promise.all([
     getBaseTxCount(address),
-    getFarcasterStats(fid ? Number(fid) : null, process.env.NEYNAR_API_KEY),
-    fid ? redis.get(`streak:${fid}`).then(v => Number(v || 0)) : Promise.resolve(0),
+    getFarcasterStats(fidNum, process.env.NEYNAR_API_KEY),
+    fidNum ? redis.get(`streak:${fidNum}`).then(v => Number(v || 0)) : Promise.resolve(0),
+    fidNum ? redis.get(`gm:lastdate:${fidNum}`) : Promise.resolve(null),
+    fidNum ? redis.sismember('gm:verified', fidNum) : Promise.resolve(false),
   ])
+
+  const todayUTC = new Date().toISOString().slice(0, 10)
+  const gmmedToday = lastGmDate === todayUTC
 
   res.setHeader('Cache-Control', 'no-store')
   return res.status(200).json({
     baseTx: txCount,
     farcaster: fcStats,
     streak,
+    gmmedToday,
+    verified: !!verified,
     goals: { baseTx: 1000, followers: 1000 }
   })
 }
