@@ -1006,20 +1006,20 @@
       }
     }
 
-    let _lang = localStorage.getItem('ba_lang') || 'en'
-    let _theme = localStorage.getItem('ba_theme') || 'dark'
+    let _lang = (() => { try { return localStorage.getItem('ba_lang') || 'en' } catch(_) { return 'en' } })()
+    let _theme = (() => { try { return localStorage.getItem('ba_theme') || 'dark' } catch(_) { return 'dark' } })()
 
     function applyTheme(t) {
       _theme = t
       document.body.classList.toggle('light', t === 'light')
       const btn = document.getElementById('theme-btn')
       if (btn) btn.textContent = t === 'light' ? '🌙' : '☀️'
-      localStorage.setItem('ba_theme', t)
+      try { localStorage.setItem('ba_theme', t) } catch(_) {}
     }
 
     function applyLang(l) {
       _lang = l
-      localStorage.setItem('ba_lang', l)
+      try { localStorage.setItem('ba_lang', l) } catch(_) {}
       const btn = document.getElementById('lang-btn')
       if (btn) btn.textContent = l.toUpperCase()
       const t = TRANSLATIONS[l] || TRANSLATIONS.en
@@ -1029,11 +1029,12 @@
       })
     }
 
-    applyTheme(_theme)
-    applyLang(_lang)
+    // Wrap in try/catch: localStorage throws SecurityError in Farcaster's sandboxed iframe
+    try { applyTheme(_theme) } catch (_) { applyTheme('dark') }
+    try { applyLang(_lang) } catch (_) { applyLang('en') }
 
-    document.getElementById('theme-btn')?.addEventListener('click', () => applyTheme(_theme === 'dark' ? 'light' : 'dark'))
-    document.getElementById('lang-btn')?.addEventListener('click', () => applyLang(_lang === 'en' ? 'tr' : 'en'))
+    document.getElementById('theme-btn')?.addEventListener('click', () => { try { applyTheme(_theme === 'dark' ? 'light' : 'dark') } catch(_){} })
+    document.getElementById('lang-btn')?.addEventListener('click', () => { try { applyLang(_lang === 'en' ? 'tr' : 'en') } catch(_){} })
     document.getElementById('header-referral-btn')?.addEventListener('click', () => {
       const gate = document.getElementById('follow-gate')
       if (gate && !gate.hidden) gate.scrollIntoView({ behavior: 'smooth', block: 'center' })
