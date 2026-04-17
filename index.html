@@ -104,6 +104,35 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .score-row { display: flex; align-items: center; justify-content: space-between; }
 
+    /* Identity / Level system */
+    .identity-card { border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .identity-card.explorer { background: linear-gradient(135deg, #0d0f1a, #111320); border: 1px solid #334155; }
+    .identity-card.active   { background: linear-gradient(135deg, #0d1220, #0f1830); border: 1px solid #2563eb66; }
+    .identity-card.builder  { background: linear-gradient(135deg, #120d20, #1a1030); border: 1px solid #7c3aed66; }
+    .identity-card.og       { background: linear-gradient(135deg, #1a1000, #2a1800); border: 1px solid #d9770666; }
+    .identity-left { display: flex; flex-direction: column; gap: 3px; }
+    .identity-rank-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
+    .identity-name { font-size: 20px; font-weight: 800; line-height: 1.1; }
+    .identity-card.explorer .identity-name { color: #94a3b8; }
+    .identity-card.active   .identity-name { color: #60a5fa; }
+    .identity-card.builder  .identity-name { color: #a78bfa; }
+    .identity-card.og       .identity-name { color: #fbbf24; }
+    .identity-score { font-size: 11px; color: #475569; margin-top: 1px; }
+    .identity-next { font-size: 10px; margin-top: 3px; color: #475569; }
+    .identity-card.og .identity-next { color: #92400e; }
+    .identity-emoji { font-size: 36px; line-height: 1; }
+    .identity-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; border: 1px solid transparent; }
+    .identity-pill.explorer { background: #1e293b; color: #94a3b8; border-color: #33415555; }
+    .identity-pill.active   { background: #0f1a2e; color: #60a5fa; border-color: #2563eb44; }
+    .identity-pill.builder  { background: #1a0f2e; color: #a78bfa; border-color: #7c3aed44; }
+    .identity-pill.og       { background: #1a1000; color: #fbbf24; border-color: #d9770644; }
+    .level-progress-bar { width: 100%; height: 3px; background: #1e1e2e; border-radius: 99px; overflow: hidden; margin-top: 6px; }
+    .level-progress-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+    .identity-card.explorer .level-progress-fill { background: #94a3b8; }
+    .identity-card.active   .level-progress-fill { background: #3b82f6; }
+    .identity-card.builder  .level-progress-fill { background: #8b5cf6; }
+    .identity-card.og       .level-progress-fill { background: linear-gradient(90deg, #f59e0b, #f97316); }
+
     /* Retention system */
     .urgency-bar { border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .urgency-bar.safe  { background: #0d1a0d; border: 1px solid #16a34a44; }
@@ -176,9 +205,12 @@
 
       <div id="streak-banner" class="streak-banner" hidden>
         <div class="streak-left">
-          <div class="streak-label" id="streak-label">🔥 GM Streak</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <div class="streak-label" id="streak-label">🔥 GM Streak</div>
+            <span class="identity-pill explorer" id="streak-identity-pill">Explorer</span>
+          </div>
           <div class="streak-count" id="streak-count">0</div>
-          <div class="streak-sub" id="streak-sub">Henüz başlamadı</div>
+          <div class="streak-sub" id="streak-sub">Not started — send your first GM!</div>
         </div>
         <div class="streak-emoji" id="streak-emoji">💤</div>
       </div>
@@ -202,6 +234,18 @@
           <div class="progress-bar"><div class="progress-fill" id="progress-followers" style="width:0%"></div></div>
         </div>
       </div>
+      <!-- Identity / Level card -->
+      <div id="identity-card" class="identity-card explorer" hidden>
+        <div class="identity-left">
+          <div class="identity-rank-label">Your rank</div>
+          <div class="identity-name" id="identity-name">Explorer 🗺️</div>
+          <div class="identity-score" id="identity-score">Score: 0</div>
+          <div class="identity-next" id="identity-next">20 pts to Active</div>
+          <div class="level-progress-bar"><div class="level-progress-fill" id="level-progress-fill" style="width:0%"></div></div>
+        </div>
+        <div class="identity-emoji" id="identity-emoji">🗺️</div>
+      </div>
+
       <div id="follow-gate" class="follow-gate" hidden>
         <div class="follow-gate-title">
           <span>👥 Follow 3 people first</span>
@@ -434,6 +478,10 @@
           document.getElementById('stat-followers').innerHTML = `${data.farcaster.followers} <span>/ 1000</span>`
           updateProgressBar('progress-followers', data.farcaster.followers, 1000)
         }
+        // Compute and render identity level
+        const _score = computeScore(data.streak, data.baseTx, data.farcaster?.followers)
+        updateIdentityUI(_score, data.streak, data.baseTx, data.farcaster?.followers)
+
         if (data.gmmedToday) {
           greetBtn.textContent = '✅ GM sent today! +5 score'
           greetBtn.classList.add('gmed-today')
@@ -475,6 +523,65 @@
         connectBtn.disabled = false
         connectBtn.textContent = 'Connect Wallet 🔗'
       }
+    }
+
+    // ── Identity / Level system ──────────────────────────────────────────
+
+    const LEVELS = [
+      { key: 'og',       label: 'OG',      emoji: '👑', min: 300, max: Infinity, next: null        },
+      { key: 'builder',  label: 'Builder', emoji: '🚀', min: 100, max: 299,      next: 'OG'        },
+      { key: 'active',   label: 'Active',  emoji: '⚡', min: 20,  max: 99,       next: 'Builder'   },
+      { key: 'explorer', label: 'Explorer',emoji: '🗺️', min: 0,   max: 19,       next: 'Active'    },
+    ]
+
+    const LEVEL_THRESHOLDS = { explorer: 0, active: 20, builder: 100, og: 300 }
+
+    function computeScore(streak, baseTx, followers) {
+      return (streak || 0) * 5 + (baseTx || 0) * 3 + (followers || 0)
+    }
+
+    function getLevel(score) {
+      return LEVELS.find(l => score >= l.min) || LEVELS[LEVELS.length - 1]
+    }
+
+    function getLevelProgress(score, level) {
+      if (level.key === 'og') return 100
+      const nextThreshold = LEVEL_THRESHOLDS[level.next?.toLowerCase()] ?? level.max + 1
+      const range = nextThreshold - level.min
+      return Math.min(100, Math.round(((score - level.min) / range) * 100))
+    }
+
+    function updateIdentityUI(score, streak, baseTx, followers) {
+      const level = getLevel(score)
+      const pct = getLevelProgress(score, level)
+
+      // ── Identity card ──
+      const card = document.getElementById('identity-card')
+      card.hidden = false
+      card.className = `identity-card ${level.key}`
+      document.getElementById('identity-name').textContent = `${level.label} ${level.emoji}`
+      document.getElementById('identity-emoji').textContent = level.emoji
+      document.getElementById('identity-score').textContent = `Score: ${score} pts`
+      document.getElementById('level-progress-fill').style.width = pct + '%'
+
+      if (level.key === 'og') {
+        document.getElementById('identity-next').textContent = '👑 Max rank achieved'
+      } else {
+        const nextThreshold = LEVEL_THRESHOLDS[level.next?.toLowerCase()] ?? 0
+        document.getElementById('identity-next').textContent =
+          `${nextThreshold - score} pts to ${level.next} · ${pct}% there`
+      }
+
+      // ── Streak banner pill ──
+      const pill = document.getElementById('streak-identity-pill')
+      if (pill) {
+        pill.className = `identity-pill ${level.key}`
+        pill.textContent = level.label
+      }
+
+      // ── Stats card score badge ──
+      const badge = document.querySelector('.score-badge')
+      if (badge) badge.textContent = `⭐ ${score} pts · ${level.label}`
     }
 
     // ── Retention helpers ────────────────────────────────────────────────
@@ -684,6 +791,17 @@
             showProgressToast()
             showAfterGMPanel()
             stopUrgencyCountdown()
+            // Refresh identity after GM (streak +1 means +5 score)
+            const _curScore = computeScore(newStreak, null, null)
+            const _idCard = document.getElementById('identity-card')
+            if (!_idCard.hidden) {
+              // Re-compute with existing tx/followers if available
+              const _txEl = document.getElementById('stat-tx')
+              const _fwEl = document.getElementById('stat-followers')
+              const _tx = parseInt(_txEl?.textContent) || 0
+              const _fw = parseInt(_fwEl?.textContent) || 0
+              updateIdentityUI(computeScore(newStreak, _tx, _fw), newStreak, _tx, _fw)
+            }
           } catch (e) { setStatus('GM sent! 🌅', 'success') }
           loadStats(fid, connectedAddress)
         } catch (err) {
