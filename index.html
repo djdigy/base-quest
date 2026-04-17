@@ -540,7 +540,7 @@
           greetBtn.classList.remove('locked')
           greetBtn.disabled = true
           followGate.hidden = true
-          showAfterGMPanel(getLevel(_score))
+          showAfterGMPanel(getLevel(_score), data.streak)
         } else if ((data.streak || 0) > 0) {
           startUrgencyCountdown(data.streak || 0)
         }
@@ -822,18 +822,21 @@
       document.getElementById('urgency-bar').hidden = true
     }
 
-    function showAfterGMPanel(level) {
+    function showAfterGMPanel(level, streak) {
       const panel = document.getElementById('after-gm-panel')
       panel.hidden = false
 
-      // Inject level-aware micro-motivation
       const titleEl = panel.querySelector('.after-gm-title')
       const msgEl = panel.querySelector('.after-gm-msg')
-      if (titleEl && level) {
-        if (level.key === 'og') {
+      if (titleEl) {
+        if (streak === 1) {
+          // First-ever GM — make it feel special
+          titleEl.textContent = '🚀 You're in. Day 1 streak started.'
+          msgEl.textContent = 'Come back tomorrow to keep it alive 🔥'
+        } else if (level?.key === 'og') {
           titleEl.textContent = '👑 OG status maintained!'
           msgEl.textContent = 'You're at the top. Come back tomorrow to keep your crown.'
-        } else {
+        } else if (level) {
           const nextLevel = LEVELS.find(l => l.label === level.next)
           titleEl.textContent = `🎉 GM done! You're getting closer to ${level.next} ${nextLevel?.emoji||'🚀'}`
           msgEl.textContent = `Come back tomorrow to keep your streak — every GM gets you closer to ${level.next} rank.`
@@ -995,7 +998,7 @@
             setStatus(`GM sent! 🌅 🔥 ${newStreak}-day streak`, 'success')
             showProgressToast()
             const _lvl = getLevel(computeScore(newStreak, parseInt(document.getElementById('stat-tx')?.textContent)||0, parseInt(document.getElementById('stat-followers')?.textContent)||0))
-            showAfterGMPanel(_lvl)
+            showAfterGMPanel(_lvl, newStreak)
             stopUrgencyCountdown()
             // Refresh identity after GM (streak +1 means +5 score)
             const _curScore = computeScore(newStreak, null, null)
