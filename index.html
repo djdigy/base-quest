@@ -127,6 +127,14 @@
     .identity-card.og       .identity-next-target { color: #fbbf24; }
     .streak-level-line { font-size: 11px; color: #64748b; margin-top: 2px; font-style: italic; }
     .streak-banner.done .streak-level-line { color: #4ade8088; }
+
+    /* Share layer */
+    .share-btn { width: 100%; padding: 11px; border-radius: 11px; font-size: 13px; font-weight: 700; border: 1px solid #334155; background: #0d0f1a; color: #94a3b8; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .share-btn:hover { border-color: #8b5cf6; color: #a78bfa; background: #120d20; }
+    .share-btn.copied { border-color: #22c55e; color: #4ade80; background: #052e16; }
+    .share-preview { font-size: 11px; color: #475569; background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 8px; padding: 9px 12px; line-height: 1.6; font-style: italic; margin-top: -4px; }
+    .share-feedback { font-size: 12px; color: #4ade80; text-align: center; font-weight: 600; height: 0; overflow: hidden; transition: height 0.2s; }
+    .share-feedback.show { height: 22px; }
     .identity-emoji { font-size: 36px; line-height: 1; }
     .identity-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; border: 1px solid transparent; }
     .identity-pill.explorer { background: #1e293b; color: #94a3b8; border-color: #33415555; }
@@ -226,6 +234,9 @@
       <div id="after-gm-panel" class="after-gm-panel" hidden>
         <div class="after-gm-title">🎉 GM done! Come back tomorrow to keep your streak 🔥</div>
         <div class="after-gm-msg">Your streak resets at midnight UTC. Don't break the chain — one GM a day keeps the reset away.</div>
+        <div class="share-preview" id="gm-share-preview"></div>
+        <button class="share-btn" id="gm-share-btn">📤 Share progress</button>
+        <div class="share-feedback" id="gm-share-feedback">Copied — share it 🚀</div>
         <button class="remind-btn" id="remind-btn">🔔 Remind me tomorrow</button>
       </div>
 
@@ -272,6 +283,13 @@
           <div class="identity-next-target" id="identity-next-target"></div>
         </div>
         <div class="identity-emoji" id="identity-emoji">🗺️</div>
+      </div>
+
+      <!-- Dashboard share -->
+      <div id="dashboard-share" hidden style="display:flex;flex-direction:column;gap:6px;">
+        <div class="share-preview" id="dash-share-preview"></div>
+        <button class="share-btn" id="dash-share-btn">📤 Share progress</button>
+        <div class="share-feedback" id="dash-share-feedback">Copied — share it 🚀</div>
       </div>
 
       <!-- Leaderboard -->
@@ -627,6 +645,9 @@
       const badge = document.querySelector('.score-badge')
       if (badge) badge.textContent = `⭐ ${score} pts · ${level.label}`
 
+      // ── Share state ──
+      updateShareState(streak || 0, level, score, false)
+
       // ── Leaderboard: render mock top players with real level badges ──
       renderLeaderboard(score, level)
     }
@@ -664,6 +685,83 @@
       })
 
       card.hidden = false
+    }
+
+    // ── Share layer ──────────────────────────────────────────────────────
+
+    let _shareState = { streak: 0, level: null, hasReferrals: false }
+
+    function buildShareText(streak, level, hasReferrals) {
+      const lines = []
+
+      // Streak line
+      if (streak > 0) {
+        lines.push(`🔥 I'm on a ${streak}-day GM streak on BaseAmp!`)
+      } else {
+        lines.push(`🌅 Just sent my first GM on BaseAmp!`)
+      }
+
+      // Level line
+      if (level) {
+        if (level.key === 'og') {
+          lines.push(`👑 OG status unlocked — top rank.`)
+        } else if (level.key === 'builder') {
+          lines.push(`🚀 Builder level unlocked!`)
+        } else if (level.key === 'active') {
+          const nextThreshold = LEVEL_THRESHOLDS['builder']
+          const ptsToNext = nextThreshold - (_shareState._score || 0)
+          lines.push(`⚡ Active rank · ${ptsToNext > 0 ? `${ptsToNext} pts from Builder` : 'Almost Builder!'}`)
+        } else {
+          lines.push(`🗺️ Just getting started — Explorer rank`)
+        }
+      }
+
+      // Referral / motivation line
+      if (hasReferrals) {
+        lines.push(`💸 Earning daily from referrals.`)
+      } else if (level && level.key !== 'og') {
+        lines.push(`Almost ${level.next} ${LEVELS.find(l=>l.label===level.next)?.emoji||''} — come join me 👇`)
+      }
+
+      lines.push(`base-quest-three.vercel.app`)
+      return lines.join('
+')
+    }
+
+    function wireShareBtn(btnId, previewId, feedbackId) {
+      const btn = document.getElementById(btnId)
+      const preview = document.getElementById(previewId)
+      const feedback = document.getElementById(feedbackId)
+      if (!btn) return
+
+      function refresh() {
+        const text = buildShareText(_shareState.streak, _shareState.level, _shareState.hasReferrals)
+        if (preview) preview.textContent = text
+        return text
+      }
+
+      refresh()
+      btn.addEventListener('click', () => {
+        const text = refresh()
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = '✅ Copied!'
+          btn.classList.add('copied')
+          if (feedback) { feedback.classList.add('show'); setTimeout(() => feedback.classList.remove('show'), 2800) }
+          setTimeout(() => { btn.textContent = '📤 Share progress'; btn.classList.remove('copied') }, 2500)
+        }).catch(() => {
+          btn.textContent = '📋 Copy failed — try manually'
+          setTimeout(() => { btn.textContent = '📤 Share progress' }, 2000)
+        })
+      })
+    }
+
+    function updateShareState(streak, level, score, hasReferrals) {
+      _shareState = { streak, level, hasReferrals, _score: score }
+      // Refresh previews if buttons already wired
+      ;['gm-share-preview','dash-share-preview'].forEach(id => {
+        const el = document.getElementById(id)
+        if (el) el.textContent = buildShareText(streak, level, hasReferrals)
+      })
     }
 
     // ── Retention helpers ────────────────────────────────────────────────
@@ -741,6 +839,9 @@
           msgEl.textContent = `Come back tomorrow to keep your streak — every GM gets you closer to ${level.next} rank.`
         }
       }
+
+      // Wire share button in after-GM panel
+      wireShareBtn('gm-share-btn', 'gm-share-preview', 'gm-share-feedback')
 
       const btn = document.getElementById('remind-btn')
       btn.addEventListener('click', () => {
@@ -834,6 +935,14 @@
           greetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' })
           startSection.hidden = true
         })
+      }
+
+      // Wire dashboard share button (always visible once stats load)
+      const dashShare = document.getElementById('dashboard-share')
+      if (dashShare) {
+        dashShare.hidden = false
+        dashShare.style.display = 'flex'
+        wireShareBtn('dash-share-btn', 'dash-share-preview', 'dash-share-feedback')
       }
 
       // Referral hint links scroll to follow gate
