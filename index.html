@@ -120,6 +120,13 @@
     .identity-score { font-size: 11px; color: #475569; margin-top: 1px; }
     .identity-next { font-size: 10px; margin-top: 3px; color: #475569; }
     .identity-card.og .identity-next { color: #92400e; }
+    .identity-next-target { font-size: 12px; font-weight: 700; margin-top: 5px; }
+    .identity-card.explorer .identity-next-target { color: #60a5fa; }
+    .identity-card.active   .identity-next-target { color: #a78bfa; }
+    .identity-card.builder  .identity-next-target { color: #fbbf24; }
+    .identity-card.og       .identity-next-target { color: #fbbf24; }
+    .streak-level-line { font-size: 11px; color: #64748b; margin-top: 2px; font-style: italic; }
+    .streak-banner.done .streak-level-line { color: #4ade8088; }
     .identity-emoji { font-size: 36px; line-height: 1; }
     .identity-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; border: 1px solid transparent; }
     .identity-pill.explorer { background: #1e293b; color: #94a3b8; border-color: #33415555; }
@@ -132,6 +139,25 @@
     .identity-card.active   .level-progress-fill { background: #3b82f6; }
     .identity-card.builder  .level-progress-fill { background: #8b5cf6; }
     .identity-card.og       .level-progress-fill { background: linear-gradient(90deg, #f59e0b, #f97316); }
+
+    /* Leaderboard */
+    .leaderboard-card { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .leaderboard-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
+    .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #13131a; border: 1px solid #1e1e2e; transition: border-color 0.2s; }
+    .lb-row.top1 { background: linear-gradient(135deg, #1a1200, #221800); border-color: #d97706aa; box-shadow: 0 0 12px #d9770618; }
+    .lb-row.top2 { background: linear-gradient(135deg, #111520, #141a28); border-color: #94a3b866; }
+    .lb-row.top3 { background: linear-gradient(135deg, #130e10, #1a1218); border-color: #b4570066; }
+    .lb-rank { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+    .lb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .lb-name { font-size: 13px; font-weight: 700; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-row.top1 .lb-name { color: #fbbf24; }
+    .lb-level-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 7px; border: 1px solid transparent; width: fit-content; }
+    .lb-level-pill.explorer { background: #1e293b; color: #94a3b8; border-color: #33415544; }
+    .lb-level-pill.active   { background: #0f1a2e; color: #60a5fa; border-color: #2563eb44; }
+    .lb-level-pill.builder  { background: #1a0f2e; color: #a78bfa; border-color: #7c3aed44; }
+    .lb-level-pill.og       { background: #1a1000; color: #fbbf24; border-color: #d9770644; }
+    .lb-score { font-size: 12px; font-weight: 700; color: #e2e8f0; flex-shrink: 0; }
+    .lb-row.top1 .lb-score { color: #fbbf24; }
 
     /* Retention system */
     .urgency-bar { border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -211,6 +237,7 @@
           </div>
           <div class="streak-count" id="streak-count">0</div>
           <div class="streak-sub" id="streak-sub">Not started — send your first GM!</div>
+          <div class="streak-level-line" id="streak-level-line"></div>
         </div>
         <div class="streak-emoji" id="streak-emoji">💤</div>
       </div>
@@ -236,14 +263,21 @@
       </div>
       <!-- Identity / Level card -->
       <div id="identity-card" class="identity-card explorer" hidden>
-        <div class="identity-left">
+        <div class="identity-left" style="flex:1;">
           <div class="identity-rank-label">Your rank</div>
           <div class="identity-name" id="identity-name">Explorer 🗺️</div>
           <div class="identity-score" id="identity-score">Score: 0</div>
           <div class="identity-next" id="identity-next">20 pts to Active</div>
           <div class="level-progress-bar"><div class="level-progress-fill" id="level-progress-fill" style="width:0%"></div></div>
+          <div class="identity-next-target" id="identity-next-target"></div>
         </div>
         <div class="identity-emoji" id="identity-emoji">🗺️</div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div id="leaderboard-card" class="leaderboard-card" hidden>
+        <div class="leaderboard-title">🏆 Top Players</div>
+        <div id="leaderboard-list" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
 
       <div id="follow-gate" class="follow-gate" hidden>
@@ -488,7 +522,7 @@
           greetBtn.classList.remove('locked')
           greetBtn.disabled = true
           followGate.hidden = true
-          showAfterGMPanel()
+          showAfterGMPanel(getLevel(_score))
         } else if ((data.streak || 0) > 0) {
           startUrgencyCountdown(data.streak || 0)
         }
@@ -554,34 +588,82 @@
     function updateIdentityUI(score, streak, baseTx, followers) {
       const level = getLevel(score)
       const pct = getLevelProgress(score, level)
+      const nextThreshold = level.key === 'og' ? null : LEVEL_THRESHOLDS[level.next?.toLowerCase()] ?? 0
+      const ptsToNext = nextThreshold !== null ? nextThreshold - score : 0
 
       // ── Identity card ──
       const card = document.getElementById('identity-card')
       card.hidden = false
       card.className = `identity-card ${level.key}`
-      document.getElementById('identity-name').textContent = `${level.label} ${level.emoji}`
+      document.getElementById('identity-name').textContent = `You are a ${level.label} ${level.emoji}`
       document.getElementById('identity-emoji').textContent = level.emoji
       document.getElementById('identity-score').textContent = `Score: ${score} pts`
       document.getElementById('level-progress-fill').style.width = pct + '%'
 
+      const nextEl = document.getElementById('identity-next')
+      const targetEl = document.getElementById('identity-next-target')
       if (level.key === 'og') {
-        document.getElementById('identity-next').textContent = '👑 Max rank achieved'
+        nextEl.textContent = `${pct}% — Max rank achieved`
+        if (targetEl) targetEl.textContent = '👑 You've made it. OG status.'
       } else {
-        const nextThreshold = LEVEL_THRESHOLDS[level.next?.toLowerCase()] ?? 0
-        document.getElementById('identity-next').textContent =
-          `${nextThreshold - score} pts to ${level.next} · ${pct}% there`
+        nextEl.textContent = `${ptsToNext} more points to ${level.next} · ${pct}% there`
+        if (targetEl) targetEl.textContent = `Keep going to reach ${level.next} ${LEVELS.find(l=>l.label===level.next)?.emoji||''}`
       }
 
-      // ── Streak banner pill ──
+      // ── Streak banner pill + level line ──
       const pill = document.getElementById('streak-identity-pill')
       if (pill) {
         pill.className = `identity-pill ${level.key}`
         pill.textContent = level.label
       }
+      const levelLine = document.getElementById('streak-level-line')
+      if (levelLine) {
+        levelLine.textContent = level.key === 'og'
+          ? `OG 👑 — max rank`
+          : `Keep going to reach ${level.next} ${LEVELS.find(l=>l.label===level.next)?.emoji||''}`
+      }
 
       // ── Stats card score badge ──
       const badge = document.querySelector('.score-badge')
       if (badge) badge.textContent = `⭐ ${score} pts · ${level.label}`
+
+      // ── Leaderboard: render mock top players with real level badges ──
+      renderLeaderboard(score, level)
+    }
+
+    function renderLeaderboard(myScore, myLevel) {
+      const card = document.getElementById('leaderboard-card')
+      const list = document.getElementById('leaderboard-list')
+      if (!card || !list) return
+
+      // Build a realistic top-3 above the user, plus user's own entry
+      const rankIcons = ['🥇','🥈','🥉']
+      const entries = [
+        { label: 'cicoz',    score: myScore + 180, addr: '0xA1b2...C3d4' },
+        { label: 'baseamp',  score: myScore + 90,  addr: '0xE5f6...G7h8' },
+        { label: 'builder1', score: myScore + 35,  addr: '0xI9j0...K1l2' },
+        { label: 'You',      score: myScore,        addr: '',             isYou: true },
+      ].filter(e => e.score > 0)
+
+      list.innerHTML = ''
+      entries.slice(0, 4).forEach((e, i) => {
+        const level = getLevel(e.score)
+        const isTop3 = i < 3
+        const rowClass = i === 0 ? 'lb-row top1' : i === 1 ? 'lb-row top2' : i === 2 ? 'lb-row top3' : 'lb-row'
+        const nameDisplay = e.isYou ? `You (${level.label})` : `${level.label} (${e.addr})`
+        const row = document.createElement('div')
+        row.className = rowClass
+        row.innerHTML = `
+          <div class="lb-rank">${isTop3 ? rankIcons[i] : '#' + (i+1)}</div>
+          <div class="lb-info">
+            <div class="lb-name">${e.isYou ? `<span style="color:#60a5fa">You</span>` : e.label}</div>
+            <span class="lb-level-pill ${level.key}">${level.emoji} ${level.label}</span>
+          </div>
+          <div class="lb-score">${e.score} pts</div>`
+        list.appendChild(row)
+      })
+
+      card.hidden = false
     }
 
     // ── Retention helpers ────────────────────────────────────────────────
@@ -642,9 +724,23 @@
       document.getElementById('urgency-bar').hidden = true
     }
 
-    function showAfterGMPanel() {
+    function showAfterGMPanel(level) {
       const panel = document.getElementById('after-gm-panel')
       panel.hidden = false
+
+      // Inject level-aware micro-motivation
+      const titleEl = panel.querySelector('.after-gm-title')
+      const msgEl = panel.querySelector('.after-gm-msg')
+      if (titleEl && level) {
+        if (level.key === 'og') {
+          titleEl.textContent = '👑 OG status maintained!'
+          msgEl.textContent = 'You're at the top. Come back tomorrow to keep your crown.'
+        } else {
+          const nextLevel = LEVELS.find(l => l.label === level.next)
+          titleEl.textContent = `🎉 GM done! You're getting closer to ${level.next} ${nextLevel?.emoji||'🚀'}`
+          msgEl.textContent = `Come back tomorrow to keep your streak — every GM gets you closer to ${level.next} rank.`
+        }
+      }
 
       const btn = document.getElementById('remind-btn')
       btn.addEventListener('click', () => {
@@ -789,7 +885,8 @@
             document.getElementById('gm-cross-hint').hidden = false
             setStatus(`GM sent! 🌅 🔥 ${newStreak}-day streak`, 'success')
             showProgressToast()
-            showAfterGMPanel()
+            const _lvl = getLevel(computeScore(newStreak, parseInt(document.getElementById('stat-tx')?.textContent)||0, parseInt(document.getElementById('stat-followers')?.textContent)||0))
+            showAfterGMPanel(_lvl)
             stopUrgencyCountdown()
             // Refresh identity after GM (streak +1 means +5 score)
             const _curScore = computeScore(newStreak, null, null)
