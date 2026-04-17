@@ -81,6 +81,7 @@
     .check-btn:hover { border-color: #3b82f6; color: #3b82f6; }
     .social-hint { font-size: 12px; color: #475569; text-align: center; line-height: 1.6; }
     .social-hint strong { color: #8b5cf6; }
+    #follow-list { display: flex; flex-direction: column; gap: 6px; }
   </style>
 </head>
 <body>
@@ -124,7 +125,7 @@
           <span>👥 Önce 3 kişiyi follow et</span>
           <span class="follow-counter" id="follow-counter">0 / 3</span>
         </div>
-        <div id="follow-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <div id="follow-list"></div>
         <button class="check-btn" id="check-follows-btn">✓ Follow ettim, kontrol et</button>
         <div class="social-hint">Follow et → GM at → <strong>sen de önerilenlere gir!</strong></div>
       </div>
@@ -172,6 +173,8 @@
     let inFarcaster = false
     let connectedAddress = null
     let currentFid = null
+
+    checkFollowsBtn.addEventListener('click', checkFollows)
 
     function setStatus(text, type = 'loading') {
       statusBadge.className = `status-badge ${type}`
@@ -280,7 +283,6 @@
         greetBtn.classList.add('locked')
         greetBtn.disabled = true
         greetBtn.textContent = `🔒 Önce 3 kişiyi follow et (${data.followedCount || 0}/3)`
-        checkFollowsBtn.addEventListener('click', checkFollows)
       } catch (e) {
         followGate.hidden = true
         greetBtn.disabled = false
@@ -417,7 +419,6 @@
         try {
           const provider = await getProvider()
           const client = createWalletClient({ chain: base, transport: custom(provider) })
-          // Hesap listesini iste - bazı provider'larda gerekli
           let accounts = await client.getAddresses()
           if (!accounts || accounts.length === 0) {
             await provider.request({ method: 'eth_requestAccounts' })

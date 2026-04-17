@@ -1,11 +1,5 @@
 // GET /api/stats?fid=<fid>&address=<address>
-// Base TX sayisi, Farcaster takipci, GM streak
-import { Redis } from '@upstash/redis'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
+import { redis } from './_lib.js'
 
 async function getBaseTxCount(address) {
   if (!address) return null
@@ -35,16 +29,20 @@ export default async function handler(req, res) {
 
   const fidNum = fid ? Number(fid) : null
 
-  const [txCount, fcStats, streak, lastGmDate, verified] = await Promise.all([
+  const gmDataPromise = fidNum
+    ? redis.hgetall(`gm:${fidNum}`)
+    : Promise.resolve(null)
+
+  const [txCount, fcStats, gmData, verified] = await Promise.all([
     getBaseTxCount(address),
     getFarcasterStats(fidNum, process.env.NEYNAR_API_KEY),
-    fidNum ? redis.get(`streak:${fidNum}`).then(v => Number(v || 0)) : Promise.resolve(0),
-    fidNum ? redis.get(`gm:lastdate:${fidNum}`) : Promise.resolve(null),
+    gmDataPromise,
     fidNum ? redis.sismember('gm:verified', fidNum) : Promise.resolve(false),
   ])
 
   const todayUTC = new Date().toISOString().slice(0, 10)
-  const gmmedToday = lastGmDate === todayUTC
+  const streak = Number(gmData?.streak || 0)
+  const gmmedToday = gmData?.lastDate === todayUTC
 
   res.setHeader('Cache-Control', 'no-store')
   return res.status(200).json({

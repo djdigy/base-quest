@@ -1,11 +1,5 @@
 // GET /api/suggest-follows?fid=<viewer_fid>
-// Verified GM'ciler once, sonra normal GM'ciler -- toplam 3 kisi
-import { Redis } from '@upstash/redis'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
+import { redis, TARGET_FID } from './_lib.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -15,7 +9,7 @@ export default async function handler(req, res) {
   const viewerFid = req.query.fid ? Number(req.query.fid) : null
 
   const [allFids, verifiedFids] = await Promise.all([
-    redis.smembers('gm:fids'),
+    redis.smembers('gm:all'),
     redis.smembers('gm:verified'),
   ])
 
@@ -27,8 +21,8 @@ export default async function handler(req, res) {
 
   let candidates = [...verified, ...others].slice(0, 3)
 
-  if (candidates.length < 3 && viewerFid !== 1351334) {
-    if (!candidates.includes(1351334)) candidates.push(1351334)
+  if (candidates.length < 3 && viewerFid !== TARGET_FID) {
+    if (!candidates.includes(TARGET_FID)) candidates.push(TARGET_FID)
   }
 
   if (candidates.length === 0) return res.status(200).json({ users: [], canGM: true })

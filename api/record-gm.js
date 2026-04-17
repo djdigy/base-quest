@@ -1,13 +1,5 @@
 // POST /api/record-gm?fid=<fid>
-// 1. GM: gm:fids setine ekle
-// 2. GM: gm:verified setine ekle (2. GM = follow verification)
-// 3. Streak hesapla: son GM 24-48 saat onceyse streak artar, 48+ saat gecmisse sifirlanir
-import { Redis } from '@upstash/redis'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
+import { redis } from './_lib.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -21,62 +13,44 @@ export default async function handler(req, res) {
 
   const fidNum = Number(fid)
   const now = Date.now()
-  const todayUTC = new Date().toISOString().slice(0, 10) // "2026-04-13"
+  const todayUTC = new Date().toISOString().slice(0, 10)
+  const gmKey = `gm:${fidNum}`
 
-  // 1. Bugun zaten GM atildi mi?
-  const lastGmDate = await redis.get(`gm:lastdate:${fidNum}`)
-  if (lastGmDate === todayUTC) {
-    // Bugun zaten atilmis, streak'i tekrar artirma
-    const streak = await redis.get(`streak:${fidNum}`)
-    const total = await redis.scard('gm:fids')
+  const gmData = await redis.hgetall(gmKey)
+  if (gmData?.lastDate === todayUTC) {
+    const total = await redis.scard('gm:all')
     const verified = await redis.sismember('gm:verified', fidNum)
     res.setHeader('Cache-Control', 'no-store')
     return res.status(200).json({
       ok: true,
       total,
       verified: !!verified,
-      streak: Number(streak || 1),
+      streak: Number(gmData.streak || 1),
       alreadyGMedToday: true,
     })
   }
 
-  // 2. gm:fids setine ekle
-  const isReturning = await redis.sismember('gm:fids', fidNum)
-  await redis.sadd('gm:fids', fidNum)
+  const isReturning = await redis.sismember('gm:all', fidNum)
+  await redis.sadd('gm:all', fidNum)
 
-  // 3. Verified kontrolu (2. GM ve sonrasi)
   let verified = false
   if (isReturning) {
     await redis.sadd('gm:verified', fidNum)
     verified = true
   }
 
-  // 4. Streak hesapla
-  const lastGmTs = await redis.get(`gm:lastts:${fidNum}`)
   let streak = 1
-
-  if (lastGmTs) {
-    const hoursSinceLast = (now - Number(lastGmTs)) / (1000 * 60 * 60)
-    const currentStreak = await redis.get(`streak:${fidNum}`)
-    const cur = Number(currentStreak || 0)
-
-    if (hoursSinceLast <= 48) {
-      // 48 saat icinde GM atilmis -> streak devam
-      streak = cur + 1
-    } else {
-      // 48 saatten fazla gecmis -> streak sifirla
-      streak = 1
-    }
+  if (gmData?.lastActive) {
+    const hoursSinceLast = (now - Number(gmData.lastActive)) / (1000 * 60 * 60)
+    const cur = Number(gmData.streak || 0)
+    streak = hoursSinceLast <= 48 ? cur + 1 : 1
   }
 
-  // 5. Redis'e kaydet
   await Promise.all([
-    redis.set(`streak:${fidNum}`, streak),
-    redis.set(`gm:lastts:${fidNum}`, now),
-    redis.set(`gm:lastdate:${fidNum}`, todayUTC),
+    redis.hset(gmKey, { streak, lastActive: now, lastDate: todayUTC }),
   ])
 
-  const total = await redis.scard('gm:fids')
+  const total = await redis.scard('gm:all')
 
   res.setHeader('Cache-Control', 'no-store')
   return res.status(200).json({
