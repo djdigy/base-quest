@@ -81,6 +81,28 @@
     .check-btn:hover { border-color: #3b82f6; color: #3b82f6; }
     .social-hint { font-size: 12px; color: #475569; text-align: center; line-height: 1.6; }
     .social-hint strong { color: #8b5cf6; }
+
+    /* Score system */
+    .score-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #fbbf24; background: #1c1a08; border: 1px solid #78350f44; border-radius: 999px; padding: 2px 8px; }
+    .action-card { background: linear-gradient(135deg, #0f0f1a, #13131f); border: 1px solid #2563eb44; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .action-card.done { border-color: #16a34a44; background: linear-gradient(135deg, #050f08, #071410); }
+    .action-main { display: flex; flex-direction: column; gap: 3px; }
+    .action-title { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+    .action-sub { font-size: 11px; color: #64748b; }
+    .action-cta { flex-shrink: 0; padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: 10px; border: none; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; cursor: pointer; width: auto; white-space: nowrap; transition: all 0.2s; }
+    .action-cta:hover { opacity: 0.85; transform: translateY(-1px); }
+    .action-cta.done-cta { background: #052e16; color: #4ade80; border: 1px solid #16a34a; cursor: default; }
+    .today-section { display: flex; flex-direction: column; gap: 8px; }
+    .today-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
+    .cross-hint { font-size: 11px; color: #475569; text-align: center; padding: 4px 0; line-height: 1.5; }
+    .cross-hint a { color: #8b5cf6; text-decoration: none; font-weight: 600; }
+    .cross-hint a:hover { text-decoration: underline; }
+    .start-earning-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 12px; border: none; cursor: pointer; width: 100%; transition: all 0.2s; }
+    .start-earning-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .progress-toast { background: linear-gradient(135deg, #0a1628, #0f1a14); border: 1px solid #2563eb33; border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #60a5fa; text-align: center; font-weight: 600; display: none; animation: fadeIn 0.4s ease; }
+    .progress-toast.show { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .score-row { display: flex; align-items: center; justify-content: space-between; }
   </style>
 </head>
 <body>
@@ -94,6 +116,22 @@
         <span class="dot pulse"></span>
         <span id="status-text">Connecting to Farcaster...</span>
       </div>
+      <!-- Today's Actions -->
+      <div id="today-section" class="today-section" hidden>
+        <div class="today-label">🔥 Today's Actions</div>
+        <div id="today-action" class="action-card">
+          <div class="action-main">
+            <div class="action-title" id="today-action-title">Send your daily GM</div>
+            <div class="action-sub" id="today-action-sub">Start your streak to earn score</div>
+          </div>
+          <button class="action-cta" id="today-action-btn">Go →</button>
+        </div>
+        <div class="cross-hint">No referrals yet? <a href="#" id="referral-hint-link">Invite a friend</a> → earn +2 score/day from their activity</div>
+      </div>
+
+      <!-- Progress toast -->
+      <div id="progress-toast" class="progress-toast">You're progressing 🚀</div>
+
       <div id="streak-banner" class="streak-banner" hidden>
         <div class="streak-left">
           <div class="streak-label" id="streak-label">🔥 GM Streak</div>
@@ -103,17 +141,20 @@
         <div class="streak-emoji" id="streak-emoji">💤</div>
       </div>
       <div id="stats-card" class="stats-card" hidden>
-        <div class="stats-title">📊 Airdrop İstatistiklerin</div>
+        <div class="score-row">
+          <div class="stats-title">📊 Your Score Progress</div>
+          <div class="score-badge">⭐ Score</div>
+        </div>
         <div class="stat-row">
           <div class="stat-label-row">
-            <span class="stat-label">🔗 Base TX</span>
+            <span class="stat-label">🔗 Base TX <span style="color:#fbbf24;font-size:10px;font-weight:700;">+3 score each</span></span>
             <span class="stat-value" id="stat-tx">— <span>/ 1000</span></span>
           </div>
           <div class="progress-bar"><div class="progress-fill" id="progress-tx" style="width:0%"></div></div>
         </div>
         <div class="stat-row">
           <div class="stat-label-row">
-            <span class="stat-label">👥 Farcaster Takipçi</span>
+            <span class="stat-label">👥 Farcaster Followers <span style="color:#fbbf24;font-size:10px;font-weight:700;">+1 each</span></span>
             <span class="stat-value" id="stat-followers">— <span>/ 1000</span></span>
           </div>
           <div class="progress-bar"><div class="progress-fill" id="progress-followers" style="width:0%"></div></div>
@@ -121,26 +162,34 @@
       </div>
       <div id="follow-gate" class="follow-gate" hidden>
         <div class="follow-gate-title">
-          <span>👥 Önce 3 kişiyi follow et</span>
+          <span>👥 Follow 3 people first</span>
           <span class="follow-counter" id="follow-counter">0 / 3</span>
         </div>
         <div id="follow-list" style="display:flex;flex-direction:column;gap:6px;"></div>
-        <button class="check-btn" id="check-follows-btn">✓ Follow ettim, kontrol et</button>
-        <div class="social-hint">Follow et → GM at → <strong>sen de önerilenlere gir!</strong></div>
+        <button class="check-btn" id="check-follows-btn">✓ I followed them, check</button>
+        <div class="social-hint">Follow → GM → <strong>get recommended & earn more score!</strong></div>
       </div>
       <div id="greet-form" hidden>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button id="connect-btn" hidden>Connect Wallet 🔗</button>
           <div id="wallet-addr" hidden style="font-size:11px;color:#4ade80;text-align:center;letter-spacing:.02em;"></div>
-          <button id="greet-btn" hidden>Send GM 🌅</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;" id="gm-btn-row">
+            <button id="greet-btn" hidden style="flex:1;">Send GM 🌅 <span style="font-size:11px;font-weight:400;opacity:0.75;">+5 score</span></button>
+          </div>
+          <div class="cross-hint" id="gm-cross-hint" hidden>Invite friends to multiply your score → <a href="#" id="gm-referral-link">Referral page</a></div>
           <div id="tx-result" hidden></div>
         </div>
       </div>
       <div id="not-following" hidden>
         <p class="not-following-msg">
-          Follow <a href="https://warpcast.com/cicoz" target="_blank">@cicoz</a> on Farcaster to unlock BaseAmp.
+          Follow <a href="https://warpcast.com/cicoz" target="_blank">@cicoz</a> on Farcaster to unlock BaseAmp and start earning score.
         </p>
       </div>
+    </div>
+
+    <!-- Start Earning CTA (shown when user needs to act) -->
+    <div id="start-earning-section" hidden>
+      <button class="start-earning-btn" id="start-earning-btn">Start earning ⭐</button>
     </div>
   </div>
   <script type="module">
@@ -180,6 +229,12 @@
       dot.className = type === 'loading' ? 'dot pulse' : 'dot'
     }
 
+    function showProgressToast() {
+      const toast = document.getElementById('progress-toast')
+      toast.classList.add('show')
+      setTimeout(() => toast.classList.remove('show'), 3500)
+    }
+
     function updateProgressBar(fillId, value, goal) {
       const pct = Math.min(100, Math.round((value / goal) * 100))
       document.getElementById(fillId).style.width = pct + '%'
@@ -192,12 +247,41 @@
       document.getElementById('streak-emoji').textContent = emoji
       if (gmmedToday) {
         streakBanner.classList.add('done')
-        document.getElementById('streak-label').textContent = '✅ Bugün GM Atıldı!'
-        document.getElementById('streak-sub').textContent = `${streak} günlük seri devam ediyor`
+        document.getElementById('streak-label').textContent = '✅ GM Done Today!'
+        document.getElementById('streak-sub').textContent = `${streak}-day streak going strong`
       } else {
         streakBanner.classList.remove('done')
         document.getElementById('streak-label').textContent = '🔥 GM Streak'
-        document.getElementById('streak-sub').textContent = streak > 0 ? `${streak} günlük seri — bugün at!` : 'Henüz başlamadı — GM at!'
+        document.getElementById('streak-sub').textContent = streak > 0 ? `${streak}-day streak — GM today!` : 'Not started — send your first GM!'
+      }
+      // Update Today's Actions
+      const todaySection = document.getElementById('today-section')
+      const todayActionCard = document.getElementById('today-action')
+      const todayTitle = document.getElementById('today-action-title')
+      const todaySub = document.getElementById('today-action-sub')
+      const todayBtn = document.getElementById('today-action-btn')
+      todaySection.hidden = false
+      if (gmmedToday) {
+        todayTitle.textContent = '✅ GM done — streak maintained!'
+        todaySub.textContent = `+5 score earned today · ${streak}-day streak`
+        todayActionCard.classList.add('done')
+        todayBtn.textContent = '✓ Done'
+        todayBtn.classList.add('done-cta')
+        todayBtn.onclick = null
+      } else if (streak > 0) {
+        todayTitle.textContent = 'Maintain your streak 🔥'
+        todaySub.textContent = `Send GM now to keep your ${streak}-day streak · +5 score`
+        todayActionCard.classList.remove('done')
+        todayBtn.textContent = 'Send GM →'
+        todayBtn.classList.remove('done-cta')
+        todayBtn.onclick = () => document.getElementById('greet-btn').click()
+      } else {
+        todayTitle.textContent = 'Start your streak (+5 score)'
+        todaySub.textContent = 'Send GM daily to earn score & grow your followers'
+        todayActionCard.classList.remove('done')
+        todayBtn.textContent = 'Send GM →'
+        todayBtn.classList.remove('done-cta')
+        todayBtn.onclick = () => document.getElementById('greet-btn').click()
       }
     }
 
@@ -253,10 +337,11 @@
           followGate.hidden = true
           greetBtn.disabled = false
           greetBtn.classList.remove('locked')
-          greetBtn.textContent = 'Send GM 🌅'
-          setStatus('3/3 Follow tamam! GM atabilirsin 🎉', 'success')
+          greetBtn.textContent = 'Send GM 🌅 +5 score'
+          setStatus('3/3 follows done! Ready to GM 🎉', 'success')
+          showProgressToast()
         } else {
-          checkFollowsBtn.textContent = `✓ Follow ettim, kontrol et (${data.followedCount}/3)`
+          checkFollowsBtn.textContent = `✓ I followed them, check (${data.followedCount}/3)`
           checkFollowsBtn.disabled = false
         }
       } catch (e) {
@@ -279,7 +364,7 @@
         renderFollowList(data.users)
         greetBtn.classList.add('locked')
         greetBtn.disabled = true
-        greetBtn.textContent = `🔒 Önce 3 kişiyi follow et (${data.followedCount || 0}/3)`
+        greetBtn.textContent = `🔒 Follow 3 people first (${data.followedCount || 0}/3)`
         checkFollowsBtn.addEventListener('click', checkFollows)
       } catch (e) {
         followGate.hidden = true
@@ -359,7 +444,7 @@
       }
 
       if (!fid) {
-        setStatus('Lütfen uygulamayı Farcaster içinden açın', 'error')
+        setStatus('Please open in Farcaster', 'error')
         await sdk.actions.ready().catch(() => {})
         return
       }
@@ -407,6 +492,30 @@
         greetBtn.hidden = false
       }
 
+      // Show "Start earning" if GM not done yet
+      const startSection = document.getElementById('start-earning-section')
+      const startBtn = document.getElementById('start-earning-btn')
+      const todayBtnEl = document.getElementById('today-action-btn')
+      if (!greetBtn.classList.contains('gmed-today')) {
+        startSection.hidden = false
+        startBtn.addEventListener('click', () => {
+          greetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          startSection.hidden = true
+        })
+      }
+
+      // Referral hint links scroll to follow gate
+      document.getElementById('referral-hint-link')?.addEventListener('click', (e) => {
+        e.preventDefault()
+        const gate = document.getElementById('follow-gate')
+        if (!gate.hidden) gate.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+      document.getElementById('gm-referral-link')?.addEventListener('click', (e) => {
+        e.preventDefault()
+        const gate = document.getElementById('follow-gate')
+        if (!gate.hidden) gate.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+
       await sdk.actions.ready().catch(() => {})
 
       greetBtn.addEventListener('click', async () => {
@@ -437,11 +546,13 @@
             const recData = await recRes.json()
             const newStreak = recData.streak || 1
             updateStreakUI(newStreak, true)
-            greetBtn.textContent = '✅ Bugün GM Attın!'
+            greetBtn.textContent = '✅ GM sent today! +5 score'
             greetBtn.classList.add('gmed-today')
             greetBtn.classList.remove('locked')
             followGate.hidden = true
-            setStatus(`GM sent! 🌅 🔥 ${newStreak} gün streak`, 'success')
+            document.getElementById('gm-cross-hint').hidden = false
+            setStatus(`GM sent! 🌅 🔥 ${newStreak}-day streak`, 'success')
+            showProgressToast()
           } catch (e) { setStatus('GM sent! 🌅', 'success') }
           loadStats(fid, connectedAddress)
         } catch (err) {
@@ -450,7 +561,7 @@
           txResult.style.color = '#f87171'
           txResult.style.fontSize = '13px'
           greetBtn.disabled = false
-          greetBtn.textContent = 'Send GM 🌅'
+          greetBtn.textContent = 'Send GM 🌅 +5 score'
         }
       })
     }
