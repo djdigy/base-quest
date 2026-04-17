@@ -15,19 +15,35 @@
   <meta name="fc:frame" content="vNext" />
   <meta name="fc:frame:image" content="https://base-quest-three.vercel.app/og.png" />
   <style>
+    /* ── Theme variables ── */
+    :root {
+      --bg: #0a0a0f; --bg2: #13131a; --bg3: #0d0d14;
+      --border: #1e1e2e; --border2: #334155;
+      --text: #e2e8f0; --text2: #94a3b8; --text3: #475569; --text4: #64748b;
+      --card-bg: #13131a; --input-bg: #0d0d14;
+      --accent: #3b82f6; --accent2: #8b5cf6;
+    }
+    body.light {
+      --bg: #f1f5f9; --bg2: #ffffff; --bg3: #f8fafc;
+      --border: #e2e8f0; --border2: #cbd5e1;
+      --text: #0f172a; --text2: #334155; --text3: #64748b; --text4: #94a3b8;
+      --card-bg: #ffffff; --input-bg: #f8fafc;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0a0a0f; color: #e2e8f0;
+      background: var(--bg); color: var(--text);
       min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+      transition: background 0.2s, color 0.2s;
     }
     #app { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
     .header { text-align: center; }
     .header h1 { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .header p { font-size: 13px; color: #64748b; margin-top: 4px; }
-    .card { background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .header p { font-size: 13px; color: var(--text3); margin-top: 4px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
     .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 12px; border-radius: 999px; font-weight: 500; width: fit-content; }
-    .status-badge.loading { background: #1e293b; color: #64748b; }
+    .status-badge.loading { background: var(--bg3); color: var(--text3); }
     .status-badge.success { background: #052e16; color: #4ade80; }
     .status-badge.error { background: #2d0a0a; color: #f87171; }
     .status-badge.info { background: #0f172a; color: #60a5fa; }
@@ -42,7 +58,7 @@
     #greet-btn.locked { background: #1e1e2e; color: #475569; cursor: not-allowed; }
     .tx-link { font-size: 12px; color: #3b82f6; text-decoration: none; word-break: break-all; }
     .tx-link:hover { text-decoration: underline; }
-    .not-following-msg { text-align: center; color: #64748b; font-size: 14px; line-height: 1.6; }
+    .not-following-msg { text-align: center; color: var(--text4); font-size: 14px; line-height: 1.6; }
     .not-following-msg a { color: #8b5cf6; text-decoration: none; font-weight: 600; }
     [hidden] { display: none !important; }
     .streak-banner { background: linear-gradient(135deg, #1c1208, #2d1a00); border: 1px solid #78350f; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
@@ -55,31 +71,31 @@
     .streak-banner.done .streak-label { color: #4ade80; }
     .streak-banner.done .streak-count { color: #4ade80; }
     .streak-banner.done .streak-sub { color: #16a34a; }
-    .stats-card { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-    .stats-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
+    .stats-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .stats-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
     .stat-row { display: flex; flex-direction: column; gap: 4px; }
     .stat-label-row { display: flex; justify-content: space-between; align-items: center; }
-    .stat-label { font-size: 12px; color: #94a3b8; }
-    .stat-value { font-size: 12px; font-weight: 700; color: #e2e8f0; }
-    .stat-value span { color: #475569; font-weight: 400; }
-    .progress-bar { width: 100%; height: 4px; background: #1e1e2e; border-radius: 99px; overflow: hidden; }
+    .stat-label { font-size: 12px; color: var(--text2); }
+    .stat-value { font-size: 12px; font-weight: 700; color: var(--text); }
+    .stat-value span { color: var(--text3); font-weight: 400; }
+    .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.6s ease; }
-    .follow-gate { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-    .follow-gate-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }
+    .follow-gate { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .follow-gate-title { font-size: 12px; font-weight: 700; color: var(--text4); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }
     .follow-counter { font-size: 12px; font-weight: 700; color: #3b82f6; }
     .follow-counter.done { color: #4ade80; }
-    .follow-user { display: flex; align-items: center; gap: 10px; background: #13131a; border: 1px solid #1e1e2e; border-radius: 10px; padding: 8px 10px; transition: border-color 0.2s; }
+    .follow-user { display: flex; align-items: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; transition: border-color 0.2s; }
     .follow-user.followed { border-color: #16a34a; background: #052e16; }
     .follow-user img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
     .follow-user .info { flex: 1; min-width: 0; }
-    .follow-user .display-name { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .follow-user .username { font-size: 11px; color: #475569; }
+    .follow-user .display-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .follow-user .username { font-size: 11px; color: var(--text3); }
     .follow-btn { flex-shrink: 0; padding: 5px 14px; font-size: 12px; font-weight: 700; border-radius: 999px; border: none; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; cursor: pointer; width: auto; transition: all 0.2s; }
     .follow-btn:hover { opacity: 0.85; }
     .follow-btn.followed { background: #052e16; color: #4ade80; border: 1px solid #16a34a; cursor: default; }
-    .check-btn { width: 100%; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1px solid #1e1e2e; background: #0d0d14; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .check-btn { width: 100%; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; }
     .check-btn:hover { border-color: #3b82f6; color: #3b82f6; }
-    .social-hint { font-size: 12px; color: #475569; text-align: center; line-height: 1.6; }
+    .social-hint { font-size: 12px; color: var(--text3); text-align: center; line-height: 1.6; }
     .social-hint strong { color: #8b5cf6; }
 
     /* Score system */
@@ -93,8 +109,8 @@
     .action-cta:hover { opacity: 0.85; transform: translateY(-1px); }
     .action-cta.done-cta { background: #052e16; color: #4ade80; border: 1px solid #16a34a; cursor: default; }
     .today-section { display: flex; flex-direction: column; gap: 8px; }
-    .today-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
-    .cross-hint { font-size: 11px; color: #475569; text-align: center; padding: 4px 0; line-height: 1.5; }
+    .today-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
+    .cross-hint { font-size: 11px; color: var(--text3); text-align: center; padding: 4px 0; line-height: 1.5; }
     .cross-hint a { color: #8b5cf6; text-decoration: none; font-weight: 600; }
     .cross-hint a:hover { text-decoration: underline; }
     .start-earning-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 12px; border: none; cursor: pointer; width: 100%; transition: all 0.2s; }
@@ -111,14 +127,14 @@
     .identity-card.builder  { background: linear-gradient(135deg, #120d20, #1a1030); border: 1px solid #7c3aed66; }
     .identity-card.og       { background: linear-gradient(135deg, #1a1000, #2a1800); border: 1px solid #d9770666; }
     .identity-left { display: flex; flex-direction: column; gap: 3px; }
-    .identity-rank-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
+    .identity-rank-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); }
     .identity-name { font-size: 20px; font-weight: 800; line-height: 1.1; }
     .identity-card.explorer .identity-name { color: #94a3b8; }
     .identity-card.active   .identity-name { color: #60a5fa; }
     .identity-card.builder  .identity-name { color: #a78bfa; }
     .identity-card.og       .identity-name { color: #fbbf24; }
-    .identity-score { font-size: 11px; color: #475569; margin-top: 1px; }
-    .identity-next { font-size: 10px; margin-top: 3px; color: #475569; }
+    .identity-score { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .identity-next { font-size: 10px; margin-top: 3px; color: var(--text3); }
     .identity-card.og .identity-next { color: #92400e; }
     .identity-next-target { font-size: 12px; font-weight: 700; margin-top: 5px; }
     .identity-card.explorer .identity-next-target { color: #60a5fa; }
@@ -129,10 +145,10 @@
     .streak-banner.done .streak-level-line { color: #4ade8088; }
 
     /* Share layer */
-    .share-btn { width: 100%; padding: 11px; border-radius: 11px; font-size: 13px; font-weight: 700; border: 1px solid #334155; background: #0d0f1a; color: #94a3b8; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .share-btn { width: 100%; padding: 11px; border-radius: 11px; font-size: 13px; font-weight: 700; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; }
     .share-btn:hover { border-color: #8b5cf6; color: #a78bfa; background: #120d20; }
     .share-btn.copied { border-color: #22c55e; color: #4ade80; background: #052e16; }
-    .share-preview { font-size: 11px; color: #475569; background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 8px; padding: 9px 12px; line-height: 1.6; font-style: italic; margin-top: -4px; }
+    .share-preview { font-size: 11px; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; line-height: 1.6; font-style: italic; margin-top: -4px; }
     .share-feedback { font-size: 12px; color: #4ade80; text-align: center; font-weight: 600; height: 0; overflow: hidden; transition: height 0.2s; }
     .share-feedback.show { height: 22px; }
     .identity-emoji { font-size: 36px; line-height: 1; }
@@ -141,7 +157,7 @@
     .identity-pill.active   { background: #0f1a2e; color: #60a5fa; border-color: #2563eb44; }
     .identity-pill.builder  { background: #1a0f2e; color: #a78bfa; border-color: #7c3aed44; }
     .identity-pill.og       { background: #1a1000; color: #fbbf24; border-color: #d9770644; }
-    .level-progress-bar { width: 100%; height: 3px; background: #1e1e2e; border-radius: 99px; overflow: hidden; margin-top: 6px; }
+    .level-progress-bar { width: 100%; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: 6px; }
     .level-progress-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
     .identity-card.explorer .level-progress-fill { background: #94a3b8; }
     .identity-card.active   .level-progress-fill { background: #3b82f6; }
@@ -149,22 +165,22 @@
     .identity-card.og       .level-progress-fill { background: linear-gradient(90deg, #f59e0b, #f97316); }
 
     /* Leaderboard */
-    .leaderboard-card { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .leaderboard-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
     .leaderboard-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
-    .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #13131a; border: 1px solid #1e1e2e; transition: border-color 0.2s; }
+    .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border); transition: border-color 0.2s; }
     .lb-row.top1 { background: linear-gradient(135deg, #1a1200, #221800); border-color: #d97706aa; box-shadow: 0 0 12px #d9770618; }
     .lb-row.top2 { background: linear-gradient(135deg, #111520, #141a28); border-color: #94a3b866; }
     .lb-row.top3 { background: linear-gradient(135deg, #130e10, #1a1218); border-color: #b4570066; }
     .lb-rank { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
     .lb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-    .lb-name { font-size: 13px; font-weight: 700; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lb-row.top1 .lb-name { color: #fbbf24; }
     .lb-level-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 7px; border: 1px solid transparent; width: fit-content; }
     .lb-level-pill.explorer { background: #1e293b; color: #94a3b8; border-color: #33415544; }
     .lb-level-pill.active   { background: #0f1a2e; color: #60a5fa; border-color: #2563eb44; }
     .lb-level-pill.builder  { background: #1a0f2e; color: #a78bfa; border-color: #7c3aed44; }
     .lb-level-pill.og       { background: #1a1000; color: #fbbf24; border-color: #d9770644; }
-    .lb-score { font-size: 12px; font-weight: 700; color: #e2e8f0; flex-shrink: 0; }
+    .lb-score { font-size: 12px; font-weight: 700; color: var(--text); flex-shrink: 0; }
     .lb-row.top1 .lb-score { color: #fbbf24; }
 
     /* Retention system */
@@ -193,30 +209,72 @@
     .streak-at-risk { font-size: 11px; color: #f97316; text-align: center; font-weight: 600; padding: 2px 0; }
 
     /* Analytics panel */
-    .analytics-panel { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .analytics-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
     .analytics-header { display: flex; align-items: center; justify-content: space-between; }
-    .analytics-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
+    .analytics-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
     .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .analytics-cell { background: #13131a; border: 1px solid #1e1e2e; border-radius: 9px; padding: 9px 11px; }
-    .analytics-cell-label { font-size: 10px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-    .analytics-cell-value { font-size: 20px; font-weight: 800; color: #e2e8f0; line-height: 1.2; margin-top: 2px; }
+    .analytics-cell { background: var(--card-bg); border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; }
+    .analytics-cell-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .analytics-cell-value { font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.2; margin-top: 2px; }
     .analytics-cell.highlight .analytics-cell-value { color: #60a5fa; }
     .analytics-cell.retention .analytics-cell-value { color: #4ade80; }
     .analytics-refresh { font-size: 11px; color: #334155; cursor: pointer; background: none; border: none; padding: 2px 6px; border-radius: 6px; transition: color 0.15s; width: auto; }
-    .analytics-refresh:hover { color: #64748b; }
+    .analytics-refresh:hover { color: var(--text4); }
+
+    /* Header controls (theme + lang toggles + referral btn) */
+    .header { position: relative; text-align: center; }
+    .header-controls { position: absolute; top: 0; right: 0; display: flex; gap: 6px; align-items: center; }
+    .ctrl-btn { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.15s; width: auto; }
+    .ctrl-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .referral-btn { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 10px; border: none; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; cursor: pointer; width: auto; transition: opacity 0.15s; }
+    .referral-btn:hover { opacity: 0.85; }
+
+    /* Hero action block */
+    .hero-block { background: linear-gradient(135deg, #0f1020, #140f20); border: 1px solid #2563eb33; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+    body.light .hero-block { background: linear-gradient(135deg, #eff6ff, #f5f3ff); border-color: #bfdbfe; }
+    .hero-title { font-size: 18px; font-weight: 800; color: var(--text); }
+    .hero-sub { font-size: 13px; color: var(--text3); }
+    .hero-done { font-size: 14px; font-weight: 700; color: #4ade80; text-align: center; padding: 4px 0; }
+    .hero-gm-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 12px; border: none; cursor: pointer; width: 100%; transition: all 0.2s; }
+    .hero-gm-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .hero-gm-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    body.light .hero-gm-btn:disabled { opacity: 0.5; }
+
+    /* Empty state */
+    .empty-state { text-align: center; font-size: 13px; color: var(--text3); padding: 8px 0; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div id="app">
     <div class="header">
       <h1>BaseAmp</h1>
-      <p>Grow your Farcaster followers & stack Base TXs — daily GM streak</p>
+      <p id="header-sub">Grow your Farcaster followers & stack Base TXs — daily GM streak</p>
+      <div class="header-controls">
+        <button class="ctrl-btn" id="lang-btn" title="Switch language">EN</button>
+        <button class="ctrl-btn" id="theme-btn" title="Switch theme">☀️</button>
+        <button class="referral-btn" id="header-referral-btn" data-i18n="invite">Invite → Earn</button>
+      </div>
     </div>
     <div class="card">
       <div id="status-badge" class="status-badge loading">
         <span class="dot pulse"></span>
         <span id="status-text">Connecting to Farcaster...</span>
       </div>
+      <!-- Hero action block -->
+      <div id="hero-block" class="hero-block" hidden>
+        <div>
+          <div class="hero-title" id="hero-title">🔥 Start your streak</div>
+          <div class="hero-sub" id="hero-sub" data-i18n="hero-sub">Send GM daily and earn score</div>
+        </div>
+        <button class="hero-gm-btn" id="hero-gm-btn" data-i18n="send-gm">Send GM</button>
+        <div class="hero-done" id="hero-done" hidden>✅ GM done — come back tomorrow</div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="empty-state" class="empty-state" hidden>
+        No activity yet — start your first GM 👇
+      </div>
+
       <!-- Today's Actions -->
       <div id="today-section" class="today-section" hidden>
         <div class="today-label">🔥 Today's Actions</div>
@@ -439,6 +497,8 @@
         document.getElementById('streak-label').textContent = '🔥 GM Streak'
         document.getElementById('streak-sub').textContent = streak > 0 ? `${streak}-day streak — GM today!` : 'Not started — send your first GM!'
       }
+      // Update hero block
+      if (typeof updateHeroBlock === 'function') updateHeroBlock(gmmedToday, streak)
       // Update Today's Actions
       const todaySection = document.getElementById('today-section')
       const todayActionCard = document.getElementById('today-action')
@@ -927,6 +987,88 @@
         document.getElementById('analytics-panel').hidden = false
       } catch (_) {}
     }
+
+    // ── Theme toggle ─────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: {
+        'hero-sub': 'Send GM daily and earn score',
+        'send-gm': 'Send GM',
+        'invite': 'Invite → Earn',
+        'streak-start': '🔥 Start your streak',
+        'streak-maintain': '🔥 Maintain your streak',
+      },
+      tr: {
+        'hero-sub': 'Günlük GM gönder ve puan kazan',
+        'send-gm': 'GM Gönder',
+        'invite': 'Davet et → Kazan',
+        'streak-start': '🔥 Serini başlat',
+        'streak-maintain': '🔥 Serini koru',
+      }
+    }
+
+    let _lang = localStorage.getItem('ba_lang') || 'en'
+    let _theme = localStorage.getItem('ba_theme') || 'dark'
+
+    function applyTheme(t) {
+      _theme = t
+      document.body.classList.toggle('light', t === 'light')
+      const btn = document.getElementById('theme-btn')
+      if (btn) btn.textContent = t === 'light' ? '🌙' : '☀️'
+      localStorage.setItem('ba_theme', t)
+    }
+
+    function applyLang(l) {
+      _lang = l
+      localStorage.setItem('ba_lang', l)
+      const btn = document.getElementById('lang-btn')
+      if (btn) btn.textContent = l.toUpperCase()
+      const t = TRANSLATIONS[l] || TRANSLATIONS.en
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n
+        if (t[key]) el.textContent = t[key]
+      })
+    }
+
+    applyTheme(_theme)
+    applyLang(_lang)
+
+    document.getElementById('theme-btn')?.addEventListener('click', () => applyTheme(_theme === 'dark' ? 'light' : 'dark'))
+    document.getElementById('lang-btn')?.addEventListener('click', () => applyLang(_lang === 'en' ? 'tr' : 'en'))
+    document.getElementById('header-referral-btn')?.addEventListener('click', () => {
+      const gate = document.getElementById('follow-gate')
+      if (gate && !gate.hidden) gate.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+
+    // ── Hero block logic ─────────────────────────────────────────────────
+    function updateHeroBlock(gmmedToday, streak) {
+      const block = document.getElementById('hero-block')
+      const heroTitle = document.getElementById('hero-title')
+      const heroBtn = document.getElementById('hero-gm-btn')
+      const heroDone = document.getElementById('hero-done')
+      const emptyState = document.getElementById('empty-state')
+      if (!block) return
+      block.hidden = false
+      if (gmmedToday) {
+        heroTitle.textContent = '✅ Streak active'
+        heroBtn.hidden = true
+        heroDone.hidden = false
+        if (emptyState) emptyState.hidden = true
+      } else {
+        heroTitle.textContent = streak > 0
+          ? (TRANSLATIONS[_lang]['streak-maintain'])
+          : (TRANSLATIONS[_lang]['streak-start'])
+        heroBtn.hidden = false
+        heroBtn.textContent = TRANSLATIONS[_lang]['send-gm'] || 'Send GM'
+        heroDone.hidden = true
+        if (emptyState) emptyState.hidden = streak > 0
+      }
+      heroBtn.onclick = () => {
+        const gb = document.getElementById('greet-btn')
+        if (gb && !gb.disabled && !gb.classList.contains('gmed-today')) gb.click()
+        else gb?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+
 
     async function main() {
       let fid
