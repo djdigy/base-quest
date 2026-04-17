@@ -360,6 +360,14 @@
     let connectedAddress = null
     let currentFid = null
 
+    function track(type) {
+      fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, fid: currentFid, address: connectedAddress }),
+      }).catch(() => {}) // silent — never block UX
+    }
+
     function setStatus(text, type = 'loading') {
       statusBadge.className = `status-badge ${type}`
       statusText.textContent = text
@@ -742,6 +750,7 @@
 
       refresh()
       btn.addEventListener('click', () => {
+        track('action:share_click')
         const text = refresh()
         navigator.clipboard.writeText(text).then(() => {
           btn.textContent = '✅ Copied!'
@@ -848,6 +857,7 @@
 
       const btn = document.getElementById('remind-btn')
       btn.addEventListener('click', () => {
+        track('action:referral_copy')
         const reminderText = '⏰ GM reminder: Open BaseAmp and send your daily GM to keep your streak! baseamp.xyz'
         navigator.clipboard.writeText(reminderText).then(() => {
           btn.textContent = '✅ Copied! Paste it as a reminder'
@@ -908,6 +918,7 @@
       }
 
       setStatus(`Connected · FID ${fid}`, 'success')
+      track('page:dashboard')
       greetForm.hidden = false
 
       if (inFarcaster) {
@@ -964,6 +975,7 @@
 
       greetBtn.addEventListener('click', async () => {
         if (greetBtn.disabled || greetBtn.classList.contains('gmed-today') || greetBtn.classList.contains('locked')) return
+        track('action:gm_click')
         greetBtn.disabled = true
         greetBtn.textContent = 'Sending…'
         txResult.hidden = true
