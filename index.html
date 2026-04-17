@@ -191,6 +191,19 @@
     .remind-btn:hover { background: #132016; border-color: #16a34a; }
     .remind-btn.copied { background: #052e16; color: #86efac; border-color: #22c55e; }
     .streak-at-risk { font-size: 11px; color: #f97316; text-align: center; font-weight: 600; padding: 2px 0; }
+
+    /* Analytics panel */
+    .analytics-panel { background: #0d0d14; border: 1px solid #1e1e2e; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .analytics-header { display: flex; align-items: center; justify-content: space-between; }
+    .analytics-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.07em; }
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .analytics-cell { background: #13131a; border: 1px solid #1e1e2e; border-radius: 9px; padding: 9px 11px; }
+    .analytics-cell-label { font-size: 10px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .analytics-cell-value { font-size: 20px; font-weight: 800; color: #e2e8f0; line-height: 1.2; margin-top: 2px; }
+    .analytics-cell.highlight .analytics-cell-value { color: #60a5fa; }
+    .analytics-cell.retention .analytics-cell-value { color: #4ade80; }
+    .analytics-refresh { font-size: 11px; color: #334155; cursor: pointer; background: none; border: none; padding: 2px 6px; border-radius: 6px; transition: color 0.15s; width: auto; }
+    .analytics-refresh:hover { color: #64748b; }
   </style>
 </head>
 <body>
@@ -322,6 +335,32 @@
         <p class="not-following-msg">
           Follow <a href="https://warpcast.com/cicoz" target="_blank">@cicoz</a> on Farcaster to unlock BaseAmp and start earning score.
         </p>
+      </div>
+    </div>
+
+    <!-- Analytics panel -->
+    <div id="analytics-panel" class="analytics-panel" hidden>
+      <div class="analytics-header">
+        <div class="analytics-title">📊 Stats</div>
+        <button class="analytics-refresh" id="analytics-refresh-btn">↻ refresh</button>
+      </div>
+      <div class="analytics-grid">
+        <div class="analytics-cell highlight">
+          <div class="analytics-cell-label">Users</div>
+          <div class="analytics-cell-value" id="an-users">—</div>
+        </div>
+        <div class="analytics-cell">
+          <div class="analytics-cell-label">GM</div>
+          <div class="analytics-cell-value" id="an-gm">—</div>
+        </div>
+        <div class="analytics-cell">
+          <div class="analytics-cell-label">Shares</div>
+          <div class="analytics-cell-value" id="an-shares">—</div>
+        </div>
+        <div class="analytics-cell retention">
+          <div class="analytics-cell-label">Retention</div>
+          <div class="analytics-cell-value" id="an-retention">—</div>
+        </div>
       </div>
     </div>
 
@@ -876,6 +915,19 @@
 
     // ─────────────────────────────────────────────────────────────────────
 
+    async function loadAnalytics() {
+      try {
+        const res = await fetch('/api/analytics')
+        if (!res.ok) return
+        const d = await res.json()
+        document.getElementById('an-users').textContent = d.users
+        document.getElementById('an-gm').textContent = d.gm
+        document.getElementById('an-shares').textContent = d.shares
+        document.getElementById('an-retention').textContent = d.retentionRate + '%'
+        document.getElementById('analytics-panel').hidden = false
+      } catch (_) {}
+    }
+
     async function main() {
       let fid
       try {
@@ -950,6 +1002,10 @@
           startSection.hidden = true
         })
       }
+
+      // Load analytics panel (fire in background, no await)
+      loadAnalytics()
+      document.getElementById('analytics-refresh-btn')?.addEventListener('click', loadAnalytics)
 
       // Wire dashboard share button (always visible once stats load)
       const dashShare = document.getElementById('dashboard-share')
