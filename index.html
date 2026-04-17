@@ -103,6 +103,31 @@
     .progress-toast.show { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .score-row { display: flex; align-items: center; justify-content: space-between; }
+
+    /* Retention system */
+    .urgency-bar { border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .urgency-bar.safe  { background: #0d1a0d; border: 1px solid #16a34a44; }
+    .urgency-bar.warn  { background: #1a100d; border: 1px solid #f9731644; }
+    .urgency-bar.crit  { background: #1a0d0d; border: 1px solid #ef444466; animation: urgency-pulse 2s ease-in-out infinite; }
+    @keyframes urgency-pulse { 0%,100% { border-color: #ef444466; } 50% { border-color: #ef4444cc; } }
+    .urgency-left { display: flex; flex-direction: column; gap: 2px; }
+    .urgency-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .urgency-bar.safe  .urgency-label { color: #4ade80; }
+    .urgency-bar.warn  .urgency-label { color: #fb923c; }
+    .urgency-bar.crit  .urgency-label { color: #f87171; }
+    .urgency-time { font-size: 22px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+    .urgency-bar.safe  .urgency-time { color: #4ade80; }
+    .urgency-bar.warn  .urgency-time { color: #f97316; }
+    .urgency-bar.crit  .urgency-time { color: #ef4444; }
+    .urgency-sub { font-size: 10px; color: #475569; margin-top: 1px; }
+    .urgency-icon { font-size: 28px; opacity: 0.85; }
+    .after-gm-panel { background: linear-gradient(135deg, #071410, #080d12); border: 1px solid #16a34a55; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .after-gm-title { font-size: 14px; font-weight: 700; color: #4ade80; }
+    .after-gm-msg { font-size: 12px; color: #64748b; line-height: 1.6; }
+    .remind-btn { background: #0f1a14; border: 1px solid #16a34a66; color: #4ade80; font-size: 13px; font-weight: 700; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .remind-btn:hover { background: #132016; border-color: #16a34a; }
+    .remind-btn.copied { background: #052e16; color: #86efac; border-color: #22c55e; }
+    .streak-at-risk { font-size: 11px; color: #f97316; text-align: center; font-weight: 600; padding: 2px 0; }
   </style>
 </head>
 <body>
@@ -131,6 +156,23 @@
 
       <!-- Progress toast -->
       <div id="progress-toast" class="progress-toast">You're progressing 🚀</div>
+
+      <!-- Streak urgency countdown (shown when streak > 0 and no GM today) -->
+      <div id="urgency-bar" class="urgency-bar safe" hidden>
+        <div class="urgency-left">
+          <div class="urgency-label" id="urgency-label">⏳ Streak resets in</div>
+          <div class="urgency-time" id="urgency-time">--:--:--</div>
+          <div class="urgency-sub" id="urgency-sub">Send GM before midnight UTC</div>
+        </div>
+        <div class="urgency-icon" id="urgency-icon">🔥</div>
+      </div>
+
+      <!-- After-GM retention panel (shown after GM is sent) -->
+      <div id="after-gm-panel" class="after-gm-panel" hidden>
+        <div class="after-gm-title">🎉 GM done! Come back tomorrow to keep your streak 🔥</div>
+        <div class="after-gm-msg">Your streak resets at midnight UTC. Don't break the chain — one GM a day keeps the reset away.</div>
+        <button class="remind-btn" id="remind-btn">🔔 Remind me tomorrow</button>
+      </div>
 
       <div id="streak-banner" class="streak-banner" hidden>
         <div class="streak-left">
@@ -275,6 +317,8 @@
         todayBtn.textContent = 'Send GM →'
         todayBtn.classList.remove('done-cta')
         todayBtn.onclick = () => document.getElementById('greet-btn').click()
+        // Start urgency countdown if streak is active
+        if (typeof startUrgencyCountdown === 'function') startUrgencyCountdown(streak)
       } else {
         todayTitle.textContent = 'Start your streak (+5 score)'
         todaySub.textContent = 'Send GM daily to earn score & grow your followers'
@@ -391,11 +435,14 @@
           updateProgressBar('progress-followers', data.farcaster.followers, 1000)
         }
         if (data.gmmedToday) {
-          greetBtn.textContent = '✅ Bugün GM Attın!'
+          greetBtn.textContent = '✅ GM sent today! +5 score'
           greetBtn.classList.add('gmed-today')
           greetBtn.classList.remove('locked')
           greetBtn.disabled = true
           followGate.hidden = true
+          showAfterGMPanel()
+        } else if ((data.streak || 0) > 0) {
+          startUrgencyCountdown(data.streak || 0)
         }
       } catch (e) {}
     }
@@ -429,6 +476,88 @@
         connectBtn.textContent = 'Connect Wallet 🔗'
       }
     }
+
+    // ── Retention helpers ────────────────────────────────────────────────
+
+    let _urgencyTimer = null
+
+    function msUntilMidnightUTC() {
+      const now = new Date()
+      const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
+      return midnight - now
+    }
+
+    function formatCountdown(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000))
+      const h = Math.floor(totalSec / 3600)
+      const m = Math.floor((totalSec % 3600) / 60)
+      const s = totalSec % 60
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    }
+
+    function startUrgencyCountdown(streak) {
+      const bar = document.getElementById('urgency-bar')
+      const timeEl = document.getElementById('urgency-time')
+      const labelEl = document.getElementById('urgency-label')
+      const subEl = document.getElementById('urgency-sub')
+      const iconEl = document.getElementById('urgency-icon')
+      bar.hidden = false
+
+      function tick() {
+        const ms = msUntilMidnightUTC()
+        const hours = ms / 3600000
+        timeEl.textContent = formatCountdown(ms)
+
+        if (hours <= 2) {
+          bar.className = 'urgency-bar crit'
+          labelEl.textContent = '🚨 Streak at risk!'
+          subEl.textContent = `Only ${formatCountdown(ms)} left to send GM`
+          iconEl.textContent = '💀'
+        } else if (hours <= 6) {
+          bar.className = 'urgency-bar warn'
+          labelEl.textContent = '⚠️ Streak resets in'
+          subEl.textContent = `${streak}-day streak — don't lose it!`
+          iconEl.textContent = '⏳'
+        } else {
+          bar.className = 'urgency-bar safe'
+          labelEl.textContent = '⏳ Streak resets in'
+          subEl.textContent = `${streak}-day streak · send GM before midnight UTC`
+          iconEl.textContent = '🔥'
+        }
+      }
+
+      tick()
+      _urgencyTimer = setInterval(tick, 1000)
+    }
+
+    function stopUrgencyCountdown() {
+      if (_urgencyTimer) { clearInterval(_urgencyTimer); _urgencyTimer = null }
+      document.getElementById('urgency-bar').hidden = true
+    }
+
+    function showAfterGMPanel() {
+      const panel = document.getElementById('after-gm-panel')
+      panel.hidden = false
+
+      const btn = document.getElementById('remind-btn')
+      btn.addEventListener('click', () => {
+        const reminderText = '⏰ GM reminder: Open BaseAmp and send your daily GM to keep your streak! baseamp.xyz'
+        navigator.clipboard.writeText(reminderText).then(() => {
+          btn.textContent = '✅ Copied! Paste it as a reminder'
+          btn.classList.add('copied')
+          setTimeout(() => {
+            btn.textContent = '🔔 Remind me tomorrow'
+            btn.classList.remove('copied')
+          }, 3000)
+        }).catch(() => {
+          // Fallback: show text to copy manually
+          btn.textContent = '📋 Copy: "GM tomorrow on BaseAmp!"'
+          btn.classList.add('copied')
+        })
+      })
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
 
     async function main() {
       let fid
@@ -553,6 +682,8 @@
             document.getElementById('gm-cross-hint').hidden = false
             setStatus(`GM sent! 🌅 🔥 ${newStreak}-day streak`, 'success')
             showProgressToast()
+            showAfterGMPanel()
+            stopUrgencyCountdown()
           } catch (e) { setStatus('GM sent! 🌅', 'success') }
           loadStats(fid, connectedAddress)
         } catch (err) {
